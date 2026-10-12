@@ -1,0 +1,16 @@
+
+.pio/
+.venv/
+coverage.xml
+.vscode/arduino.json
+.vscode/c_cpp_properties.json
+.vscode/settings.json
+esp32_marauder/.vscode/settings.json
+__pycache__/
+*.pyc
+
+# RedGuard local toolchains and generated firmware
+.redguard-build/
+build/
+*.elf
+*.map
