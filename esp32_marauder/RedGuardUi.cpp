@@ -24,7 +24,7 @@ void Ui::button(Rect rect, TextId id, bool selected) {
 }
 
 void Ui::draw() {
-  if (page_ == Page::ScanHub || page_ == Page::Results || page_ == Page::Detail || page_ == Page::Channels) {
+  if (page_ == Page::ScanHub || page_ == Page::Results || page_ == Page::Detail || page_ == Page::Channels || page_ == Page::Risk) {
     drawScanPage(); return;
   }
   auto& tft = display_obj.tft;
@@ -33,7 +33,7 @@ void Ui::draw() {
   TextId title = TextId::Title;
   if (page_ == Page::Settings) title = TextId::Settings;
   if (page_ == Page::Info) title = TextId::DeviceInfo;
-  if (page_ == Page::Notice) title = topic_;
+  if (page_ == Page::Notice || page_ == Page::Password) title = topic_;
   if (page_ == Page::Legacy) title = TextId::Advanced;
   label(text(title), 8, 8, 224, accent, true);
   tft.drawFastHLine(10, 41, 220, accent);
@@ -46,6 +46,12 @@ void Ui::draw() {
     button(rowRect(0), TextId::DeviceInfo, selected_ == 0);
     button(rowRect(1), TextId::DeviceSettings, selected_ == 1);
     button(bottomRect, TextId::Back, selected_ == 2);
+  } else if (page_ == Page::Password) {
+    label(text(TextId::PasswordMac),12,60,216,TFT_WHITE);
+    label(text(TextId::PasswordTool),12,100,216,TFT_LIGHTGREY);
+    label(text(TextId::PasswordInput),12,140,216,TFT_LIGHTGREY);
+    label(text(TextId::PasswordWordlist),12,180,216,TFT_LIGHTGREY);
+    button(bottomRect,TextId::Back,true);
   } else if (page_ == Page::Notice) {
     label(text(TextId::Pending), 12, 70, 216, TFT_YELLOW);
     label(text(TextId::NoScan), 12, 110, 216, TFT_LIGHTGREY);
@@ -75,7 +81,7 @@ void Ui::draw() {
 UiAction Ui::poll(uint32_t now, bool touchEnabled) {
   if (scanner_.poll(now)) {
     scanMessage_ = scanner_.state() == ScanState::Complete ? TextId::ScanComplete : TextId::ScanFailed;
-    if (page_ == Page::ScanHub || page_ == Page::Results || page_ == Page::Channels) draw();
+    if (page_ == Page::ScanHub || page_ == Page::Results || page_ == Page::Channels || page_ == Page::Risk) draw();
   }
   if (!touchEnabled) { navigation_.reset(); return UiAction::None; }
   uint16_t x = 0, y = 0;
@@ -83,14 +89,14 @@ UiAction Ui::poll(uint32_t now, bool touchEnabled) {
   const int8_t held = display_obj.menuButton(&x, &y, pressed, true);
   const auto event = navigation_.update(held, pressed, now);
   if (event == NavigationEvent::None) return UiAction::None;
-  const unsigned count = page_ == Page::Home ? 9 : page_ == Page::Settings ? 3 : page_ == Page::Legacy ? 2 : page_ == Page::ScanHub ? 5 : page_ == Page::Results ? resultCount() + 2 : 1;
+  const unsigned count = page_ == Page::Home ? 9 : page_ == Page::Settings ? 3 : page_ == Page::Legacy ? 2 : page_ == Page::ScanHub ? 5 : page_ == Page::Results ? resultCount() + 2 : page_ == Page::Risk ? 2 : 1;
   if (event == NavigationEvent::Up || event == NavigationEvent::Down) {
     selected_ = event == NavigationEvent::Up ? (selected_ + count - 1) % count : (selected_ + 1) % count;
     if (page_ == Page::Home) homePage_ = selected_ < 4 ? 0 : 1;
     draw();
     return UiAction::None;
   }
-  if (page_ == Page::ScanHub || page_ == Page::Results || page_ == Page::Detail || page_ == Page::Channels) {
+  if (page_ == Page::ScanHub || page_ == Page::Results || page_ == Page::Detail || page_ == Page::Channels || page_ == Page::Risk) {
     activateScanItem(); draw(); return UiAction::None;
   }
   if (page_ == Page::Home) {
@@ -98,7 +104,8 @@ UiAction Ui::poll(uint32_t now, bool touchEnabled) {
     if (selected_ == 8) page_ = Page::Legacy;
     else {
       topic_ = homeItems[selected_];
-      page_ = topic_ == TextId::Settings ? Page::Settings :
+      riskMode_ = topic_ == TextId::Security;
+      page_ = riskMode_ ? Page::Results : topic_ == TextId::Password ? Page::Password : topic_ == TextId::Settings ? Page::Settings :
         (topic_ == TextId::WifiScan || topic_ == TextId::Signal) ? Page::ScanHub : Page::Notice;
     }
     selected_ = 0;

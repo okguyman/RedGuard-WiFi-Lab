@@ -7,8 +7,9 @@ struct Ap {
   uint8_t bssid[6]{};
   uint8_t channel = 0;
   int8_t rssi = -127;
-  uint8_t auth = 0;
-  uint8_t pairwise = 0;
+  uint8_t auth = 255;
+  uint8_t pairwise = 255;
+  uint8_t group = 255;
   bool wps = false;
 };
 class Snapshot {

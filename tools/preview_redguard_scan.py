@@ -24,8 +24,16 @@ def frame(kind):
  def button(key,y,h=44,on=False):
   d.rounded_rectangle((10,y,229,y+h-1),radius=5,fill=panel,outline=accent if on else panel)
   text(strings[key],14,y+(h-24)//2,212,accent if on else (255,255,255),True)
- text(strings['Channels' if kind=='channels' else 'WifiScan'],8,8,224,accent,True);d.line((10,41,229,41),fill=accent)
- if kind=='hub':
+ text(strings['Channels' if kind=='channels' else 'Password' if kind=='password' else 'Security' if kind.startswith('risk') else 'WifiScan'],8,8,224,accent,True);d.line((10,41,229,41),fill=accent)
+ if kind in ('risk','risk-advice'):
+  text('LAB_WIFI_SAMPLE',10,50)
+  keys=['UpgradeSecurity','UnknownPmf','UnknownPassword','UnknownRouter'] if kind=='risk-advice' else ['RiskHigh','AuthLegacy','CipherLegacy','WpsReview']
+  for i,key in enumerate(keys):text(strings[key],10,82+i*32,color=(255,220,80) if i==0 else (211,211,211))
+  button('NextPage',212,34,on=True);text(strings['RiskLimit'],10,252,color=(211,211,211));button('Back',290,26)
+ elif kind=='password':
+  for i,key in enumerate(['PasswordMac','PasswordTool','PasswordInput','PasswordWordlist']):text(strings[key],12,60+i*40,216,color=(211,211,211))
+  button('Back',290,26,on=True)
+ elif kind=='hub':
   for i,key in enumerate(['StartScan','ViewResults','Channels','ExportCsv']):button(key,54+i*48,on=i==0)
   text(strings['ScanComplete'],10,252,color=(211,211,211));button('Back',290,26)
  elif kind=='list':
@@ -44,7 +52,9 @@ def frame(kind):
    if n:d.text((x,190-height),str(n),fill='white',font_size=8)
   text(strings['CountOnly'],10,244,color=(211,211,211));button('Back',290,26,on=True)
  return im
-out=Image.new('RGB',(744,320),(35,35,35))
-for i,kind in enumerate(['hub','list','channels']):out.paste(frame(kind),(252*i,0))
-out.resize((1488,640),Image.Resampling.NEAREST).save(sys.argv[1])
-print('Synthetic scan layout generated')
+if __name__ == '__main__':
+ kinds=['risk','risk-advice','password'] if '--audit' in sys.argv else ['hub','list','channels']
+ out=Image.new('RGB',(744,320),(35,35,35))
+ for i,kind in enumerate(kinds):out.paste(frame(kind),(252*i,0))
+ out.resize((1488,640),Image.Resampling.NEAREST).save(sys.argv[1])
+ print('Synthetic layout generated; not a device screenshot')

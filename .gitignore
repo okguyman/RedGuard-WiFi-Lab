@@ -14,3 +14,8 @@ __pycache__/
 build/
 *.elf
 *.map
+
+# Local offline dictionaries/reports must not be committed
+.redguard-local/
+*.sqlite3
+*.sqlite3-*

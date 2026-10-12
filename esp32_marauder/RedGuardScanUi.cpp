@@ -1,6 +1,7 @@
 #include "RedGuardUi.h"
 #if defined(MARAUDER_CYD_2USB)
 #include "RedGuardRender.h"
+#include "RedGuardRisk.h"
 #include "WiFiScan.h"
 #include <stdio.h>
 extern Display display_obj;
@@ -25,7 +26,7 @@ void Ui::drawScanPage() {
   auto& tft = display_obj.tft;
   tft.setRotation(SCREEN_ORIENTATION);
   tft.fillScreen(kBackground);
-  label(text(page_ == Page::Channels ? TextId::Channels : TextId::WifiScan), 8, 8, 224, kAccent, true);
+  label(text(page_ == Page::Channels ? TextId::Channels : riskMode_ || page_ == Page::Risk ? TextId::Security : TextId::WifiScan), 8, 8, 224, kAccent, true);
   tft.drawFastHLine(10,41,220,kAccent);
   char line[64];
   const unsigned count = resultCount();
@@ -37,6 +38,7 @@ void Ui::drawScanPage() {
     label(text(scanMessage_), 10, 252, 220, TFT_LIGHTGREY);
     button(bottomRect, TextId::Back, selected_ == 4);
   } else if (page_ == Page::Results) {
+    if (!count) label(text(TextId::NoResultHint),10,104,220,TFT_LIGHTGREY);
     const unsigned first = (selected_ / 4) * 4;
     for (unsigned row = 0; row < 4; ++row) {
       const unsigned index = first + row;
@@ -59,6 +61,26 @@ void Ui::drawScanPage() {
     if (channelFilter_) snprintf(line,sizeof(line),"%u/%u  CH:%u",count,scanner_.total(),channelFilter_);
     label(line,10,252,220,TFT_LIGHTGREY);
     button(bottomRect,TextId::Back,selected_ == count+1);
+  } else if (page_ == Page::Risk) {
+    const auto* ap = resultAt(detailIndex_);
+    if (ap) {
+      const auto risk = assess(*ap);
+      label(ap->ssid[0] ? ap->ssid : text(TextId::Hidden),10,50,220,TFT_WHITE);
+      if (!riskAdvice_) {
+        label(text(risk.level),10,82,220,risk.level == TextId::RiskHigh ? TFT_YELLOW : TFT_WHITE);
+        label(text(risk.authentication),10,114,220,TFT_LIGHTGREY);
+        label(text(risk.cipher),10,146,220,TFT_LIGHTGREY);
+        label(text(risk.wps),10,178,220,TFT_LIGHTGREY);
+      } else {
+        label(text(risk.advice),10,82,220,TFT_WHITE);
+        label(text(TextId::UnknownPmf),10,114,220,TFT_LIGHTGREY);
+        label(text(TextId::UnknownPassword),10,146,220,TFT_LIGHTGREY);
+        label(text(TextId::UnknownRouter),10,178,220,TFT_LIGHTGREY);
+      }
+      button(Rect{10,212,220,34},TextId::NextPage,selected_ == 0);
+      label(text(TextId::RiskLimit),10,252,220,TFT_LIGHTGREY);
+    }
+    button(bottomRect,TextId::Back,selected_ == 1);
   } else if (page_ == Page::Detail) {
     const auto* ap = resultAt(detailIndex_);
     if (ap) {
@@ -115,9 +137,12 @@ void Ui::activateScanItem() {
     }
   } else if (page_ == Page::Results) {
     const unsigned count=resultCount();
-    if (selected_ < count) { detailIndex_=selected_;page_=Page::Detail;selected_=0; }
+    if (selected_ < count) { detailIndex_=selected_;page_=riskMode_ ? Page::Risk : Page::Detail;riskAdvice_=false;selected_=0; }
     else if (selected_ == count) {channelFilter_=(channelFilter_+1)%15;selected_=resultCount();}
-    else {page_=Page::ScanHub;selected_=1;}
+    else {page_=riskMode_ ? Page::Home : Page::ScanHub;selected_=riskMode_ ? homeSelected_ : 1;}
+  } else if (page_ == Page::Risk) {
+    if (selected_ == 0) riskAdvice_=!riskAdvice_;
+    else {page_=Page::Results;selected_=detailIndex_;}
   } else if (page_ == Page::Detail) {page_=Page::Results;selected_=detailIndex_;}
   else {page_=Page::ScanHub;selected_=2;}
 }

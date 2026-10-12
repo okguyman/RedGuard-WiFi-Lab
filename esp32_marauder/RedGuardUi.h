@@ -21,13 +21,15 @@ class Ui {
   // 返回原版入口动作时由原有菜单系统接管；本页不会启动无线任务。
   UiAction poll(uint32_t now, bool touchEnabled);
  private:
-  enum class Page : uint8_t { Home, Settings, Notice, Info, Legacy, ScanHub, Results, Detail, Channels };
+  enum class Page : uint8_t { Home, Settings, Notice, Info, Legacy, ScanHub, Results, Detail, Channels, Risk, Password };
   Page page_ = Page::Home;
   unsigned homePage_ = 0;
   TextId topic_ = TextId::Title;
   Navigation navigation_;
   Scanner scanner_;
   unsigned detailIndex_ = 0;
+  bool riskMode_ = false;
+  bool riskAdvice_ = false;
   uint8_t channelFilter_ = 0;
   TextId scanMessage_ = TextId::NoResults;
   unsigned resultCount() const;

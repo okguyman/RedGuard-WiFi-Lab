@@ -15,6 +15,7 @@ with tempfile.TemporaryDirectory(prefix='redguard-tests-') as temporary:
     for name, files in [
         ('model', ['RedGuardModel.cpp', 'RedGuardText.cpp']),
         ('scan', ['RedGuardScanModel.cpp']),
+        ('risk', ['RedGuardRisk.cpp']),
     ]:
         output = Path(temporary) / name
         subprocess.run([compiler, '-std=c++17', '-Wall', '-Wextra', '-Werror',
@@ -23,4 +24,4 @@ with tempfile.TemporaryDirectory(prefix='redguard-tests-') as temporary:
                         *[str(source / item) for item in files], '-o', str(output)], check=True)
         subprocess.run([str(output)], check=True)
 subprocess.run([sys.executable, '-m', 'unittest', 'tools.test_installer_manifest',
-                'tools.test_tft_workflow_configuration'], cwd=root, check=True)
+                'tools.test_tft_workflow_configuration', 'tools.test_redguard_audit'], cwd=root, check=True)

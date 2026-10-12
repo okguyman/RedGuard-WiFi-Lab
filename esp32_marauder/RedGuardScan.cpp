@@ -3,6 +3,15 @@
 #include <string.h>
 #include <Arduino.h>
 namespace RedGuard {
+static_assert(WIFI_AUTH_OPEN == 0 && WIFI_AUTH_WEP == 1 && WIFI_AUTH_WPA_PSK == 2 &&
+ WIFI_AUTH_WPA2_PSK == 3 && WIFI_AUTH_WPA_WPA2_PSK == 4 && WIFI_AUTH_WPA2_ENTERPRISE == 5 &&
+ WIFI_AUTH_WPA3_PSK == 6 && WIFI_AUTH_WPA2_WPA3_PSK == 7 && WIFI_AUTH_OWE == 9 &&
+ WIFI_AUTH_WPA3_ENT_192 == 10 && WIFI_AUTH_WPA3_ENTERPRISE == 14 &&
+ WIFI_AUTH_WPA2_WPA3_ENTERPRISE == 15 && WIFI_AUTH_WPA_ENTERPRISE == 16, "Review risk auth mapping");
+static_assert(WIFI_CIPHER_TYPE_NONE == 0 && WIFI_CIPHER_TYPE_WEP40 == 1 &&
+ WIFI_CIPHER_TYPE_WEP104 == 2 && WIFI_CIPHER_TYPE_TKIP == 3 && WIFI_CIPHER_TYPE_CCMP == 4 &&
+ WIFI_CIPHER_TYPE_TKIP_CCMP == 5 && WIFI_CIPHER_TYPE_GCMP == 8 && WIFI_CIPHER_TYPE_GCMP256 == 9,
+ "Review risk cipher mapping");
 void Scanner::scanDone(void* arg, esp_event_base_t, int32_t, void* data) {
   auto* self = static_cast<Scanner*>(arg);
   const auto* event = static_cast<const wifi_event_sta_scan_done_t*>(data);
@@ -83,7 +92,7 @@ bool Scanner::poll(uint32_t now) {
     memcpy(ap.ssid, record.ssid, 32); ap.ssid[32] = '\0';
     memcpy(ap.bssid, record.bssid, 6);
     ap.channel = record.primary; ap.rssi = record.rssi;
-    ap.auth = uint8_t(record.authmode); ap.pairwise = uint8_t(record.pairwise_cipher); ap.wps = record.wps;
+    ap.auth = uint8_t(record.authmode); ap.pairwise = uint8_t(record.pairwise_cipher); ap.group = uint8_t(record.group_cipher); ap.wps = record.wps;
     results_.add(ap);
   }
   total_ = count;
@@ -103,6 +112,10 @@ const char* authName(uint8_t auth) {
     case WIFI_AUTH_WPA3_PSK: return "WPA3";
     case WIFI_AUTH_WPA2_WPA3_PSK: return "WPA2/WPA3";
     case WIFI_AUTH_OWE: return "OWE";
+    case WIFI_AUTH_WPA3_ENT_192: return "WPA3-EAP-192";
+    case WIFI_AUTH_WPA3_ENTERPRISE: return "WPA3-EAP";
+    case WIFI_AUTH_WPA2_WPA3_ENTERPRISE: return "WPA2/WPA3-EAP";
+    case WIFI_AUTH_WPA_ENTERPRISE: return "WPA-EAP";
     default: return "UNKNOWN";
   }
 }
