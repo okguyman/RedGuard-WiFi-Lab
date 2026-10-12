@@ -15,6 +15,7 @@ with tempfile.TemporaryDirectory(prefix='redguard-tests-') as temporary:
     for name, files in [
         ('model', ['RedGuardModel.cpp', 'RedGuardText.cpp']),
         ('scan', ['RedGuardScanModel.cpp']),
+        ('pmf', ['RedGuardPmf.cpp']),
         ('risk', ['RedGuardRisk.cpp']),
     ]:
         output = Path(temporary) / name

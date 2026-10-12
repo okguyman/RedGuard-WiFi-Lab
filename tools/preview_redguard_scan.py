@@ -24,12 +24,12 @@ def frame(kind):
  def button(key,y,h=44,on=False):
   d.rounded_rectangle((10,y,229,y+h-1),radius=5,fill=panel,outline=accent if on else panel)
   text(strings[key],14,y+(h-24)//2,212,accent if on else (255,255,255),True)
- text(strings['Channels' if kind=='channels' else 'Password' if kind=='password' else 'Security' if kind.startswith('risk') else 'WifiScan'],8,8,224,accent,True);d.line((10,41,229,41),fill=accent)
- if kind in ('risk','risk-advice'):
+ text(strings['Channels' if kind=='channels' else 'Password' if kind=='password' else 'Security' if kind.startswith(('risk','pmf')) else 'WifiScan'],8,8,224,accent,True);d.line((10,41,229,41),fill=accent)
+ if kind in ('risk','risk-advice','pmf-required','pmf-optional','pmf-conflicting'):
   text('LAB_WIFI_SAMPLE',10,50)
-  keys=['UpgradeSecurity','UnknownPmf','UnknownPassword','UnknownRouter'] if kind=='risk-advice' else ['RiskHigh','AuthLegacy','CipherLegacy','WpsReview']
+  keys=['ReviewRouter','PmfRequired','UnknownPassword','UnknownRouter'] if kind=='pmf-required' else ['EnablePmf','PmfCapable','UnknownPassword','UnknownRouter'] if kind=='pmf-optional' else ['ReviewRouter','PmfConflicting','UnknownPassword','UnknownRouter'] if kind=='pmf-conflicting' else ['UpgradeSecurity','UnknownPmf','UnknownPassword','UnknownRouter'] if kind=='risk-advice' else ['RiskHigh','AuthLegacy','CipherLegacy','WpsReview']
   for i,key in enumerate(keys):text(strings[key],10,82+i*32,color=(255,220,80) if i==0 else (211,211,211))
-  button('NextPage',212,34,on=True);text(strings['RiskLimit'],10,252,color=(211,211,211));button('Back',290,26)
+  button('NextPage',212,34,on=True);text(strings['KnownChecks']+(' 2/4' if kind=='pmf-conflicting' else ' 3/4') if kind.startswith('pmf') else strings['RiskLimit'],10,252,color=(211,211,211));button('Back',290,26)
  elif kind=='password':
   for i,key in enumerate(['PasswordMac','PasswordTool','PasswordInput','PasswordWordlist']):text(strings[key],12,60+i*40,216,color=(211,211,211))
   button('Back',290,26,on=True)
@@ -53,7 +53,7 @@ def frame(kind):
   text(strings['CountOnly'],10,244,color=(211,211,211));button('Back',290,26,on=True)
  return im
 if __name__ == '__main__':
- kinds=['risk','risk-advice','password'] if '--audit' in sys.argv else ['hub','list','channels']
+ kinds=['pmf-required','pmf-optional','pmf-conflicting'] if '--pmf' in sys.argv else ['risk','risk-advice','password'] if '--audit' in sys.argv else ['hub','list','channels']
  out=Image.new('RGB',(744,320),(35,35,35))
  for i,kind in enumerate(kinds):out.paste(frame(kind),(252*i,0))
  out.resize((1488,640),Image.Resampling.NEAREST).save(sys.argv[1])

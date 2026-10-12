@@ -83,5 +83,14 @@
   "PasswordTool": "使用配套离线工具",
   "PasswordInput": "隐藏输入，不上传密码",
   "PasswordWordlist": "支持导入自备弱词库",
-  "NoResultHint": "请先完成一次网络扫描"
+  "NoResultHint": "请先完成一次网络扫描",
+  "PmfNotAdvertised": "PMF：未声明支持",
+  "PmfCapable": "PMF：广播支持可选",
+  "PmfRequired": "PMF：广播要求保护",
+  "PmfNoRsn": "PMF：未见 RSN 字段",
+  "PmfInvalid": "PMF：声明位异常",
+  "PmfConflicting": "PMF：声明有冲突",
+  "PmfMissing": "PMF：能力字段缺失",
+  "EnablePmf": "兼容时要求 PMF 保护",
+  "KnownChecks": "已知配置项："
 }

@@ -9,6 +9,8 @@ struct Risk {
   TextId cipher;
   TextId wps;
   TextId advice;
+  uint8_t knownChecks = 0;
 };
 Risk assess(const Ap& ap);
+TextId pmfText(Pmf pmf);
 }

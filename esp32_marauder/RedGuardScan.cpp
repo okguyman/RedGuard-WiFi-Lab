@@ -12,6 +12,47 @@ static_assert(WIFI_CIPHER_TYPE_NONE == 0 && WIFI_CIPHER_TYPE_WEP40 == 1 &&
  WIFI_CIPHER_TYPE_WEP104 == 2 && WIFI_CIPHER_TYPE_TKIP == 3 && WIFI_CIPHER_TYPE_CCMP == 4 &&
  WIFI_CIPHER_TYPE_TKIP_CCMP == 5 && WIFI_CIPHER_TYPE_GCMP == 8 && WIFI_CIPHER_TYPE_GCMP256 == 9,
  "Review risk cipher mapping");
+namespace {
+// Persistent storage avoids a callback retaining a Scanner pointer during teardown.
+PmfEvidence evidence;
+portMUX_TYPE evidenceMux = portMUX_INITIALIZER_UNLOCKED;
+bool captureActive = false;
+uint32_t captureGeneration = 0;
+void freezePmf() {
+  portENTER_CRITICAL(&evidenceMux);
+  captureActive = false;
+  portEXIT_CRITICAL(&evidenceMux);
+}
+void beginPmf() {
+  portENTER_CRITICAL(&evidenceMux);
+  evidence.clear();
+  ++captureGeneration;
+  captureActive = true;
+  portEXIT_CRITICAL(&evidenceMux);
+}
+Pmf observedPmf(const uint8_t bssid[6]) {
+  portENTER_CRITICAL(&evidenceMux);
+  const Pmf pmf = evidence.lookup(bssid);
+  portEXIT_CRITICAL(&evidenceMux);
+  return pmf;
+}
+void pmfCallback(void* buffer, wifi_promiscuous_pkt_type_t type) {
+  if (!buffer || type != WIFI_PKT_MGMT) return;
+  portENTER_CRITICAL(&evidenceMux);
+  const bool active = captureActive;
+  const uint32_t generation = captureGeneration;
+  portEXIT_CRITICAL(&evidenceMux);
+  if (!active) return;
+  const auto* packet = static_cast<const wifi_promiscuous_pkt_t*>(buffer);
+  const size_t length = packet->rx_ctrl.sig_len;
+  PmfObservation observation;
+  // The pinned ESP32 SDK defines sig_len as including four FCS bytes.
+  if (parsePmfEsp32Packet(packet->payload,length,packet->rx_ctrl.rx_state == 0,observation) != AdvertisementStatus::Observed) return;
+  portENTER_CRITICAL(&evidenceMux);
+  if (captureActive && captureGeneration == generation) evidence.add(observation,packet->rx_ctrl.rssi);
+  portEXIT_CRITICAL(&evidenceMux);
+}
+}
 void Scanner::scanDone(void* arg, esp_event_base_t, int32_t, void* data) {
   auto* self = static_cast<Scanner*>(arg);
   const auto* event = static_cast<const wifi_event_sta_scan_done_t*>(data);
@@ -24,6 +65,9 @@ void Scanner::releaseRadio() {
     handler_ = nullptr;
   }
   if (ownsDriver_) {
+    freezePmf();
+    esp_wifi_set_promiscuous(false);
+    esp_wifi_set_promiscuous_rx_cb(nullptr);
     esp_wifi_scan_stop();
     esp_wifi_clear_ap_list();
     esp_wifi_stop();
@@ -52,6 +96,14 @@ bool Scanner::start(uint32_t now) {
       (err = esp_wifi_set_storage(WIFI_STORAGE_RAM)) == ESP_OK &&
       (err = esp_wifi_set_mode(WIFI_MODE_STA)) == ESP_OK &&
       (err = esp_wifi_start()) == ESP_OK) {
+    wifi_promiscuous_filter_t filter{};
+    filter.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT;
+    beginPmf();
+    if ((err = esp_wifi_set_promiscuous_filter(&filter)) != ESP_OK ||
+        (err = esp_wifi_set_promiscuous_rx_cb(&pmfCallback)) != ESP_OK ||
+        (err = esp_wifi_set_promiscuous(true)) != ESP_OK) {
+      error_ = err; releaseRadio(); state_ = ScanState::Failed; return false;
+    }
     wifi_scan_config_t scan{};
     scan.show_hidden = true;
     scan.scan_type = WIFI_SCAN_TYPE_PASSIVE;
@@ -77,6 +129,7 @@ bool Scanner::poll(uint32_t now) {
   if (status_.load() != 0) {
     error_ = ESP_FAIL; releaseRadio(); state_ = ScanState::Failed; return true;
   }
+  freezePmf(); // Freeze metadata before merging with the completed SDK snapshot.
   uint16_t count = 0;
   esp_err_t err = esp_wifi_scan_get_ap_num(&count);
   if (err != ESP_OK) { error_ = err; releaseRadio(); state_ = ScanState::Failed; return true; }
@@ -91,6 +144,7 @@ bool Scanner::poll(uint32_t now) {
     Ap ap;
     memcpy(ap.ssid, record.ssid, 32); ap.ssid[32] = '\0';
     memcpy(ap.bssid, record.bssid, 6);
+    ap.pmf = observedPmf(ap.bssid);
     ap.channel = record.primary; ap.rssi = record.rssi;
     ap.auth = uint8_t(record.authmode); ap.pairwise = uint8_t(record.pairwise_cipher); ap.group = uint8_t(record.group_cipher); ap.wps = record.wps;
     results_.add(ap);
@@ -121,7 +175,7 @@ const char* authName(uint8_t auth) {
 }
 void Scanner::exportCsv() const {
   Serial.println("REDGUARD_CSV_BEGIN");
-  Serial.println("ssid,bssid,channel,rssi_dbm,auth,uptime_ms,pmf");
+  Serial.println("ssid,bssid,channel,rssi_dbm,auth,uptime_ms,pmf,pairwise_cipher_id,group_cipher_id,wps_advertised");
   for (size_t i = 0; i < results_.size(); ++i) {
     const auto& ap = *results_.at(i);
     Serial.print("\"'");
@@ -130,9 +184,9 @@ void Scanner::exportCsv() const {
       if (*p == '"') Serial.print('"');
       if (*p < 32 || *p == 127) Serial.print('?'); else Serial.write(*p);
     }
-    Serial.printf("\",%02x:%02x:%02x:%02x:%02x:%02x,%u,%d,%s,%lu,unknown\r\n",
+    Serial.printf("\",%02x:%02x:%02x:%02x:%02x:%02x,%u,%d,%s,%lu,%s,%u,%u,%u\r\n",
       ap.bssid[0],ap.bssid[1],ap.bssid[2],ap.bssid[3],ap.bssid[4],ap.bssid[5],ap.channel,ap.rssi,
-      authName(ap.auth),static_cast<unsigned long>(scannedAt_));
+      authName(ap.auth),static_cast<unsigned long>(scannedAt_),pmfName(ap.pmf),ap.pairwise,ap.group,unsigned(ap.wps));
   }
   Serial.println("REDGUARD_CSV_END");
 }

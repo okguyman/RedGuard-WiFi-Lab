@@ -87,7 +87,16 @@ enum class TextId : uint8_t {
   PasswordTool,
   PasswordInput,
   PasswordWordlist,
-  NoResultHint, Count
+  NoResultHint,
+  PmfNotAdvertised,
+  PmfCapable,
+  PmfRequired,
+  PmfNoRsn,
+  PmfInvalid,
+  PmfConflicting,
+  PmfMissing,
+  EnablePmf,
+  KnownChecks, Count
 };
 const char* text(TextId id);
 struct Glyph { uint32_t codepoint; uint8_t advance; uint8_t bitmap[72]; };

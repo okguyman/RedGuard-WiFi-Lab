@@ -38,7 +38,7 @@ void Ui::drawScanPage() {
     label(text(scanMessage_), 10, 252, 220, TFT_LIGHTGREY);
     button(bottomRect, TextId::Back, selected_ == 4);
   } else if (page_ == Page::Results) {
-    if (!count) label(text(TextId::NoResultHint),10,104,220,TFT_LIGHTGREY);
+    if (!count && !scanner_.results().size()) label(text(TextId::NoResultHint),10,104,220,TFT_LIGHTGREY);
     const unsigned first = (selected_ / 4) * 4;
     for (unsigned row = 0; row < 4; ++row) {
       const unsigned index = first + row;
@@ -73,12 +73,15 @@ void Ui::drawScanPage() {
         label(text(risk.wps),10,178,220,TFT_LIGHTGREY);
       } else {
         label(text(risk.advice),10,82,220,TFT_WHITE);
-        label(text(TextId::UnknownPmf),10,114,220,TFT_LIGHTGREY);
+        label(text(pmfText(ap->pmf)),10,114,220,TFT_LIGHTGREY);
         label(text(TextId::UnknownPassword),10,146,220,TFT_LIGHTGREY);
         label(text(TextId::UnknownRouter),10,178,220,TFT_LIGHTGREY);
       }
       button(Rect{10,212,220,34},TextId::NextPage,selected_ == 0);
-      label(text(TextId::RiskLimit),10,252,220,TFT_LIGHTGREY);
+      if (riskAdvice_) {
+        snprintf(line,sizeof(line),"%s %u/4",text(TextId::KnownChecks),risk.knownChecks);
+        label(line,10,252,220,TFT_LIGHTGREY);
+      } else label(text(TextId::RiskLimit),10,252,220,TFT_LIGHTGREY);
     }
     button(bottomRect,TextId::Back,selected_ == 1);
   } else if (page_ == Page::Detail) {
@@ -90,7 +93,7 @@ void Ui::drawScanPage() {
       snprintf(line,sizeof(line),"CH:%u  %d dBm  %d%%",ap->channel,ap->rssi,signalPercent(ap->rssi));
       label(line,10,106,220,TFT_WHITE);
       label(authName(ap->auth),10,134,220,TFT_WHITE);
-      label(text(TextId::UnknownPmf),10,162,220,TFT_LIGHTGREY);
+      label(text(pmfText(ap->pmf)),10,162,220,TFT_LIGHTGREY);
       label(text(ap->wps ? TextId::WpsPresent : TextId::WpsUnobserved),10,190,220,TFT_LIGHTGREY);
       snprintf(line,sizeof(line),"+%lus",static_cast<unsigned long>(scanner_.scannedAt()/1000));
       tft.setFreeFont(nullptr);tft.setTextSize(1);tft.setTextColor(TFT_LIGHTGREY,kBackground);tft.drawString(line,10,230,1);

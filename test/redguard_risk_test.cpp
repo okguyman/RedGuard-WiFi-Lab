@@ -30,5 +30,17 @@ int main() {
   assert(assess(ap).cipher == TextId::CipherNone && assess(ap).level == TextId::RiskHigh);
   ap.auth=3;
   assert(assess(ap).level == TextId::RiskUnknown); // Inconsistent protected/none isn't declared safe.
+  ap.auth=3;ap.pairwise=4;ap.group=4;ap.wps=false;
+  assert(assess(ap).knownChecks==2);
+  ap.pmf=Pmf::Required;
+  assert(assess(ap).knownChecks==3 && assess(ap).level==TextId::RiskNoFinding);
+  ap.pmf=Pmf::Capable;
+  assert(assess(ap).level==TextId::RiskReview && assess(ap).advice==TextId::EnablePmf);
+  ap.pmf=Pmf::NotAdvertised;
+  assert(assess(ap).level==TextId::RiskReview);
+  ap.pmf=Pmf::Conflicting;
+  assert(assess(ap).level==TextId::RiskReview && assess(ap).knownChecks==2);
+  ap.pmf=Pmf::Invalid;ap.wps=true;
+  assert(assess(ap).knownChecks==3 && assess(ap).advice==TextId::DisableWps);
   puts("Risk evidence, legacy group cipher, WPS and unknown handling passed");
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
+#include "RedGuardPmf.h"
 namespace RedGuard {
 struct Ap {
   char ssid[33]{};
@@ -11,6 +12,7 @@ struct Ap {
   uint8_t pairwise = 255;
   uint8_t group = 255;
   bool wps = false;
+  Pmf pmf = Pmf::Unknown;
 };
 class Snapshot {
  public:

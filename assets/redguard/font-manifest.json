@@ -8,9 +8,9 @@
     20,
     24
   ],
-  "glyph_count": 317,
-  "bitmap_bytes": 22824,
-  "chars": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~…、一上下不与中串为于仅代件优传估使保信候停先入全关具兼内准出分初到刷前加动化单原发取口另可号名后含启告器回固在块基备外失套始字存安完实室容密察导尚工已布并广库度开式弱强当待志息成或手扫报持换接描播支改放数整文断新方无时显最未本析果查柱标核检模次止正步段比洞测渡滤漏点热版牙现用由电界留百的监盾看知码示离称移稍算系红级线结络统续网置能自至英菜蓝藏表被要见观认论设证评词试请读败超足路载输过返进连送选逐道部配量闪闭阶限险隐隔需非面页项频风验高，：",
+  "glyph_count": 329,
+  "bitmap_bytes": 23688,
+  "chars": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~…、一上下不与中串为于仅代件优传估位使保信候停先入全关具兼内冲准出分初到刷前力加动化单原发取口另可号名后含启告器回固在块基声备外失套始字存安完实室容密察导尚工已布常并广库度开异式弱强当待志息成或手扫护报持换接描播支改放数整文断新方无时明显最有未本析果查柱标核检模次止正步段比求洞测渡滤漏点热版牙现用由电界留百的监盾看知码示离称移稍突算系红级线结络统续缺网置能自至英菜蓝藏表被要见观认论设证评词试请读败超足路载输过返进连送选逐道部配量闪闭阶限险隐隔需非面页项频风验高，：",
   "text_widths": {
     "Title": 126,
     "WifiScan": 118,
@@ -96,6 +96,15 @@
     "PasswordTool": 144,
     "PasswordInput": 180,
     "PasswordWordlist": 162,
-    "NoResultHint": 180
+    "NoResultHint": 180,
+    "PmfNotAdvertised": 146,
+    "PmfCapable": 164,
+    "PmfRequired": 164,
+    "PmfNoRsn": 173,
+    "PmfInvalid": 146,
+    "PmfConflicting": 146,
+    "PmfMissing": 164,
+    "EnablePmf": 172,
+    "KnownChecks": 108
   }
 }

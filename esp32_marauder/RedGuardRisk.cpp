@@ -22,9 +22,25 @@ Risk assess(const Ap& ap) {
   } else if (modern(ap.pairwise) && modern(ap.group)) {
     r.cipher = TextId::CipherModern; knownCipher = true;
   }
+  const bool pmfKnown = ap.pmf == Pmf::NotAdvertised || ap.pmf == Pmf::Capable || ap.pmf == Pmf::Required;
+  const bool pmfOptional = ap.pmf == Pmf::NotAdvertised || ap.pmf == Pmf::Capable;
+  review = review || pmfOptional || ap.pmf == Pmf::Invalid || ap.pmf == Pmf::Conflicting;
+  r.knownChecks = uint8_t(knownAuth) + uint8_t(knownCipher) + uint8_t(ap.wps) + uint8_t(pmfKnown);
   r.level = high ? TextId::RiskHigh : review ? TextId::RiskReview :
     knownAuth && knownCipher ? TextId::RiskNoFinding : TextId::RiskUnknown;
-  r.advice = high ? TextId::UpgradeSecurity : ap.wps ? TextId::DisableWps : TextId::ReviewRouter;
+  r.advice = high ? TextId::UpgradeSecurity : ap.wps ? TextId::DisableWps : pmfOptional ? TextId::EnablePmf : TextId::ReviewRouter;
   return r;
+}
+TextId pmfText(Pmf pmf) {
+  switch (pmf) {
+    case Pmf::CapabilitiesMissing: return TextId::PmfMissing;
+    case Pmf::NotAdvertised: return TextId::PmfNotAdvertised;
+    case Pmf::Capable: return TextId::PmfCapable;
+    case Pmf::Required: return TextId::PmfRequired;
+    case Pmf::NoRsn: return TextId::PmfNoRsn;
+    case Pmf::Invalid: return TextId::PmfInvalid;
+    case Pmf::Conflicting: return TextId::PmfConflicting;
+    default: return TextId::UnknownPmf;
+  }
 }
 }
