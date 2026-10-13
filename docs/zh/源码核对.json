@@ -1,0 +1,16 @@
+{
+  "upstream_commit": "b2b9f92382eb60b39b8741be3b567e416cdbe672",
+  "changed_upstream_files": [
+    "MenuFunctions.cpp",
+    "WiFiScan.cpp",
+    "Display.cpp",
+    "lang_var.h",
+    "CommandLine.cpp"
+  ],
+  "original_config_and_main_unchanged": true,
+  "scan_and_command_logic_unchanged": true,
+  "no_redguard_hooks": true,
+  "font_glyphs": 414,
+  "font_bytes": 94976,
+  "font_structure_and_chinese_coverage_valid": true
+}

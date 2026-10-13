@@ -1,4 +1,3 @@
-#include "RedGuardRender.h"
 /* FLASH SETTINGS
 Board: LOLIN D32
  Frequency: 80MHz
@@ -339,9 +338,6 @@ void setup()
     #endif
   #endif
 
-  #if defined(MARAUDER_CYD_2USB)
-    RedGuard::drawBootStage(display_obj.tft, RedGuard::TextId::BootSettings);
-  #endif
   settings_obj.begin();
 
   const char* type = settings_obj.getSettingType("wu");
@@ -362,9 +358,6 @@ void setup()
     #endif
   #endif
 
-  #if defined(MARAUDER_CYD_2USB)
-    RedGuard::drawBootStage(display_obj.tft, RedGuard::TextId::BootWireless);
-  #endif
   wifi_scan_obj.RunSetup();
 
   #ifdef HAS_T_DONGLE_DISPLAY
@@ -392,9 +385,6 @@ void setup()
     led_obj.RunSetup();
   #endif
 
-  #if defined(MARAUDER_CYD_2USB)
-    RedGuard::drawBootStage(display_obj.tft, RedGuard::TextId::BootExtras);
-  #endif
   #ifdef HAS_GPS
     gps_obj.begin();
   #endif
@@ -406,9 +396,6 @@ void setup()
   #ifdef HAS_SCREEN
     #if defined(MARAUDER_CARDPUTER) || defined(MARAUDER_CARDPUTER_ADV)
       display_obj.clearScreen();
-    #endif
-    #if defined(MARAUDER_CYD_2USB)
-      RedGuard::drawBootStage(display_obj.tft, RedGuard::TextId::BootMenu);
     #endif
     menu_function_obj.RunSetup();
   #endif

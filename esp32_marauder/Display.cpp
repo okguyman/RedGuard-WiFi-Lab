@@ -1,6 +1,6 @@
+#include "MarauderZhFont.h"
 #include "Display.h"
 #include "BootSplashBitmap.h"
-#include "RedGuardRender.h"
 #include "DisplayLine.h"
 #include "lang_var.h"
 
@@ -259,6 +259,7 @@ void Display::RunSetup() {
   #endif
   
   tft.init();
+  tft.loadFont(MarauderZhFont);
 
   tft.setRotation(SCREEN_ORIENTATION);
 
@@ -288,10 +289,6 @@ void Display::RunSetup() {
 }
 
 void Display::drawBootSplash() {
-  #if defined(MARAUDER_CYD_2USB)
-    RedGuard::drawBoot(tft);
-    return;
-  #endif
   const int16_t width = tft.width();
   const int16_t height = tft.height();
   #ifdef MARAUDER_POOM
@@ -346,7 +343,7 @@ void Display::drawBootSplash() {
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
   tft.drawCentreString(version_number, width / 2, layout.version_y, 1);
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.drawCentreString("Initializing...", width / 2, layout.status_y, 1);
+  tft.drawCentreString("正在初始化…", width / 2, layout.status_y, 1);
   tft.setTextSize(1);
 }
 
@@ -370,7 +367,7 @@ void Display::tftDrawEapolColorKey(bool filter)
   if (filter) {
     uint16_t y = tft.getCursorY();
     tft.setCursor(14, y);
-    tft.println("Filter Active");
+    tft.println("过滤已启用");
   }
 }
 
@@ -385,7 +382,7 @@ void Display::tftDrawColorKey()
 
 void Display::tftDrawXScaleButtons(byte x_scale) {
   tft.drawFastVLine(234, 0, 20, TFT_WHITE);
-  tft.setCursor(208, 21); tft.setTextColor(TFT_WHITE); tft.setTextSize(1); tft.print("X Scale:"); tft.print(x_scale);
+  tft.setCursor(208, 21); tft.setTextColor(TFT_WHITE); tft.setTextSize(1); tft.print("横轴比例："); tft.print(x_scale);
 
   key[X_MINUS_INDEX].initButton(&tft, // x - box
                         220,
@@ -418,7 +415,7 @@ void Display::tftDrawXScaleButtons(byte x_scale) {
 void Display::tftDrawYScaleButtons(byte y_scale)
 {
   tft.drawFastVLine(290, 0, 20, TFT_WHITE);
-  tft.setCursor(265, 21); tft.setTextColor(TFT_WHITE); tft.setTextSize(1); tft.print("Y Scale:"); tft.print(y_scale);
+  tft.setCursor(265, 21); tft.setTextColor(TFT_WHITE); tft.setTextSize(1); tft.print("纵轴比例："); tft.print(y_scale);
 
   key[Y_MINUS_INDEX].initButton(&tft, // y - box
                         276,
@@ -583,7 +580,7 @@ void Display::tftDrawExitScaleButtons(bool lnd_an) {
     TOP_FIXED_AREA_2 = lnd_an ? 48 : 64;
   #endif
   //tft.drawFastVLine(178, 0, 20, TFT_WHITE);
-  //tft.setCursor(145, 21); tft.setTextColor(TFT_WHITE); tft.setTextSize(1); tft.print("Channel:"); tft.print(set_channel);
+  //tft.setCursor(145, 21); tft.setTextColor(TFT_WHITE); tft.setTextSize(1); tft.print("信道："); tft.print(set_channel);
 
   if (lnd_an) {
 

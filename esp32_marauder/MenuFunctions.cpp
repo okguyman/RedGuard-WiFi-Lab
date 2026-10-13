@@ -70,9 +70,14 @@ String MenuFunctions::menuLabelWindow(const String& name, uint16_t offset) {
   if (offset >= name.length())
     offset = 0;
 
+  while (offset < name.length() && (uint8_t(name[offset]) & 0xc0) == 0x80) ++offset;
   String visible = name.substring(offset);
   while (visible.length() > 1 && display_obj.tft.textWidth(visible) > available_width)
-    visible.remove(visible.length() - 1);
+  {
+    unsigned end=visible.length()-1;
+    while (end && (uint8_t(visible[end]) & 0xc0)==0x80) --end;
+    visible.remove(end);
+  }
 
   return visible;
 }
@@ -297,17 +302,6 @@ void MenuFunctions::main(uint32_t currentTime)
       wifi_scan_obj.orient_display = false;
     }
   }
-
-  #if defined(MARAUDER_CYD_2USB)
-    // RedGuard 首页沿用原版三区域操作；无线任务运行时仍交回原有状态机。
-    if (current_menu == &redguardMenu &&
-        (wifi_scan_obj.currentScanMode == WIFI_SCAN_OFF || wifi_scan_obj.currentScanMode == WIFI_CONNECTED)) {
-      const auto action = redguardUi.poll(currentTime, !disable_touch);
-      if (action == RedGuard::UiAction::Upstream) this->changeMenu(&mainMenu, true);
-      else if (action == RedGuard::UiAction::DeviceSettings) this->changeMenu(&deviceMenu, true);
-      return;
-    }
-  #endif
 
   if (currentTime != 0) {
     if (currentTime - initTime >= BANNER_TIME) {
@@ -1300,13 +1294,13 @@ void MenuFunctions::updateStatusBar()
       display_obj.tft.fillRect(50, 0, (CHAR_WIDTH / 2) * 7, STATUS_BAR_WIDTH, STATUSBAR_COLOR);
     #endif
     #ifdef HAS_FULL_SCREEN
-      display_obj.tft.drawString("CH: " + (String)wifi_scan_obj.old_channel, 50, 0, 2);
+      display_obj.tft.drawString("信道：" + (String)wifi_scan_obj.old_channel, 50, 0, 2);
     #endif
 
     #if defined(MARAUDER_POOM)
       display_obj.tft.drawString("C" + (String)wifi_scan_obj.old_channel, 0, 0, 1);
     #elif defined(HAS_MINI_SCREEN)
-      display_obj.tft.drawString("CH:" + (String)wifi_scan_obj.old_channel, TFT_WIDTH/4, 0, 1);
+      display_obj.tft.drawString("信道：" + (String)wifi_scan_obj.old_channel, TFT_WIDTH/4, 0, 1);
     #endif
   }
 
@@ -1490,13 +1484,13 @@ void MenuFunctions::drawStatusBar()
     display_obj.tft.fillRect(50, 0, TFT_WIDTH * 0.21, STATUS_BAR_WIDTH, STATUSBAR_COLOR);
   #endif
   #ifdef HAS_FULL_SCREEN
-    display_obj.tft.drawString("CH: " + (String)wifi_scan_obj.old_channel, 50, 0, 2);
+    display_obj.tft.drawString("信道：" + (String)wifi_scan_obj.old_channel, 50, 0, 2);
   #endif
 
   #if defined(MARAUDER_POOM)
     display_obj.tft.drawString("C" + (String)wifi_scan_obj.old_channel, 0, 0, 1);
   #elif defined(HAS_MINI_SCREEN)
-    display_obj.tft.drawString("CH:" + (String)wifi_scan_obj.old_channel, TFT_WIDTH/4, 0, 1);
+    display_obj.tft.drawString("信道：" + (String)wifi_scan_obj.old_channel, TFT_WIDTH/4, 0, 1);
   #endif
 
   // RAM Stuff
@@ -1738,19 +1732,19 @@ bool MenuFunctions::isKeyPressed(char c)
       uploadLogsMenu.list->clear();
       delete uploadLogsMenu.list;
       uploadLogsMenu.list = new LinkedList<MenuNode>();
-      uploadLogsMenu.name = "Logs";
+      uploadLogsMenu.name = "日志";
 
       uploadLogsMenu.parentMenu = &wifiGeneralMenu;
 
-      this->addNodes(&uploadLogsMenu, "Back", TFTLIGHTGREY, 0, [this]() {
+      this->addNodes(&uploadLogsMenu, "返回", TFTLIGHTGREY, 0, [this]() {
         this->changeMenu(uploadLogsMenu.parentMenu, true);
       });
 
-      this->addNodes(&uploadLogsMenu, "Delete Wardrive Logs", TFTORANGE, 0, [this]() {
+      this->addNodes(&uploadLogsMenu, "删除巡测日志", TFTORANGE, 0, [this]() {
         this->changeMenu(&deleteAllMenu, true);
       });
 
-      this->addNodes(&uploadLogsMenu, "Upload All", TFTGREEN, 0, [this]() {
+      this->addNodes(&uploadLogsMenu, "上传全部", TFTGREEN, 0, [this]() {
         this->changeMenu(&uploadAllMenu, true);
         
       });
@@ -1813,16 +1807,16 @@ void MenuFunctions::buildFoxSortMenu() {
   foxSortMenu.list->clear();
   foxSortMenu.parentMenu = current_menu;
   this->addNodes(&foxSortMenu, text09, TFTLIGHTGREY, 0, [this]() { this->changeMenu(foxSortMenu.parentMenu, true); });
-  this->addNodes(&foxSortMenu, "Signal: Strongest", TFTCYAN, 255, [this]() {
+  this->addNodes(&foxSortMenu, "信号从强到弱", TFTCYAN, 255, [this]() {
     fox_sort_mode = TargetSortMode::SIGNAL_DESC;
     buildFoxTargetList(fox_target_list, fox_target_context_ap);
   });
-  this->addNodes(&foxSortMenu, "Name/MAC: A-Z", TFTCYAN, 255, [this]() {
+  this->addNodes(&foxSortMenu, "名称/MAC排序", TFTCYAN, 255, [this]() {
     fox_sort_mode = TargetSortMode::NAME_ASC;
     buildFoxTargetList(fox_target_list, fox_target_context_ap);
   });
   if (foxListSupportsBand()) {
-    this->addNodes(&foxSortMenu, "Channel: Low-High", TFTCYAN, 255, [this]() {
+    this->addNodes(&foxSortMenu, "信道从低到高", TFTCYAN, 255, [this]() {
       fox_sort_mode = TargetSortMode::CHANNEL_ASC;
       buildFoxTargetList(fox_target_list, fox_target_context_ap);
     });
@@ -1834,12 +1828,12 @@ void MenuFunctions::buildFoxFilterMenu() {
   foxFilterMenu.list->clear();
   foxFilterMenu.parentMenu = current_menu;
   this->addNodes(&foxFilterMenu, text09, TFTLIGHTGREY, 0, [this]() { this->changeMenu(foxFilterMenu.parentMenu, true); });
-  this->addNodes(&foxFilterMenu, "All", TFTGREEN, 255, [this]() {
+  this->addNodes(&foxFilterMenu, "全部", TFTGREEN, 255, [this]() {
     fox_filter_mode = TargetFilterMode::ALL;
     buildFoxTargetList(fox_target_list, fox_target_context_ap);
   });
   if (foxListSupportsRecent()) {
-    this->addNodes(&foxFilterMenu, "Seen in 30 Seconds", TFTGREEN, 255, [this]() {
+    this->addNodes(&foxFilterMenu, "三十秒内出现", TFTGREEN, 255, [this]() {
       fox_filter_mode = TargetFilterMode::RECENT_30S;
       buildFoxTargetList(fox_target_list, fox_target_context_ap);
     });
@@ -1877,7 +1871,7 @@ void MenuFunctions::buildFoxTargetList(FoxHuntListKind type, int context_ap) {
   this->addNodes(menu, sort_row.c_str(), TFTCYAN, 255, [this]() { buildFoxSortMenu(); });
   String filter_row = "Filter: " + String(foxFilterLabel());
   this->addNodes(menu, filter_row.c_str(), TFTGREEN, 255, [this]() { buildFoxFilterMenu(); });
-  this->addNodes(menu, "Refresh List", TFTYELLOW, 255, [this]() { buildFoxTargetList(fox_target_list, fox_target_context_ap); });
+  this->addNodes(menu, "刷新列表", TFTYELLOW, 255, [this]() { buildFoxTargetList(fox_target_list, fox_target_context_ap); });
 
   std::vector<TargetListItem> items;
   auto add_item = [&items](size_t index, int16_t rssi, uint8_t channel, uint32_t last_seen, const String& name) {
@@ -2032,10 +2026,10 @@ void MenuFunctions::buildWiFiFoxHuntMenu() {
   foxHuntMenu.list->clear();
   foxHuntMenu.parentMenu = &wifiSnifferMenu;
   this->addNodes(&foxHuntMenu, text09, TFTLIGHTGREY, 0, [this]() { this->changeMenu(foxHuntMenu.parentMenu, true); });
-  this->addNodes(&foxHuntMenu, "APs", TFTLIME, WIFI, [this]() { buildFoxTargetList(FoxHuntListKind::AP_TARGETS); });
-  this->addNodes(&foxHuntMenu, "Stations", TFTMAGENTA, WIFI, [this]() { buildFoxTargetList(FoxHuntListKind::APS_WITH_STATIONS); });
+  this->addNodes(&foxHuntMenu, "热点", TFTLIME, WIFI, [this]() { buildFoxTargetList(FoxHuntListKind::AP_TARGETS); });
+  this->addNodes(&foxHuntMenu, "终端", TFTMAGENTA, WIFI, [this]() { buildFoxTargetList(FoxHuntListKind::APS_WITH_STATIONS); });
   this->addNodes(&foxHuntMenu, "WiFi Pineapples", TFTYELLOW, PINESCAN_SNIFF, [this]() { buildFoxTargetList(FoxHuntListKind::PINEAPPLE_TARGETS); });
-  this->addNodes(&foxHuntMenu, "MultiSSID", TFTORANGE, MULTISSID_SNIFF, [this]() { buildFoxTargetList(FoxHuntListKind::MULTISSID_TARGETS); });
+  this->addNodes(&foxHuntMenu, "多SSID", TFTORANGE, MULTISSID_SNIFF, [this]() { buildFoxTargetList(FoxHuntListKind::MULTISSID_TARGETS); });
   this->changeMenu(&foxHuntMenu, true);
 }
 
@@ -2043,10 +2037,10 @@ void MenuFunctions::buildBluetoothFoxHuntMenu() {
   foxHuntMenu.list->clear();
   foxHuntMenu.parentMenu = &bluetoothSnifferMenu;
   this->addNodes(&foxHuntMenu, text09, TFTLIGHTGREY, 0, [this]() { this->changeMenu(foxHuntMenu.parentMenu, true); });
-  this->addNodes(&foxHuntMenu, "BLE Devices", TFTCYAN, BLUETOOTH, [this]() { buildFoxTargetList(FoxHuntListKind::BLE_TARGETS); });
+  this->addNodes(&foxHuntMenu, "BLE设备", TFTCYAN, BLUETOOTH, [this]() { buildFoxTargetList(FoxHuntListKind::BLE_TARGETS); });
   this->addNodes(&foxHuntMenu, "FindMy", TFTWHITE, BLUETOOTH, [this]() { buildFoxTargetList(FoxHuntListKind::FINDMY_TARGETS); });
   this->addNodes(&foxHuntMenu, "Flipper Zero", TFTORANGE, FLIPPER, [this]() { buildFoxTargetList(FoxHuntListKind::FLIPPER_TARGETS); });
-  this->addNodes(&foxHuntMenu, "iBeacons", TFTCYAN, BLUETOOTH, [this]() { buildFoxTargetList(FoxHuntListKind::IBEACON_TARGETS); });
+  this->addNodes(&foxHuntMenu, "iBeacon列表", TFTCYAN, BLUETOOTH, [this]() { buildFoxTargetList(FoxHuntListKind::IBEACON_TARGETS); });
   this->addNodes(&foxHuntMenu, "Meta", TFTWHITE, BLUETOOTH, [this]() { buildFoxTargetList(FoxHuntListKind::META_TARGETS); });
   this->addNodes(&foxHuntMenu, "Flock", TFTORANGE, FLOCK, [this]() { buildFoxTargetList(FoxHuntListKind::FLOCK_TARGETS); });
   this->changeMenu(&foxHuntMenu, true);
@@ -2162,7 +2156,7 @@ void MenuFunctions::RunSetup()
 
   // Work menu names
   mainMenu.name = text_table1[6];
-  reconMenu.name = "Recon";
+  reconMenu.name = "侦察";
   wifiMenu.name = text_table1[7];
   deviceMenu.name = text_table1[9];
   failedUpdateMenu.name = text_table1[11];
@@ -2170,73 +2164,67 @@ void MenuFunctions::RunSetup()
   updateMenu.name = text_table1[15];
   infoMenu.name = text_table1[17];
   settingsMenu.name = text_table1[18];
-  geofenceMenu.name = "Geofences";
-  geofenceActionMenu.name = "Geofence";
+  geofenceMenu.name = "地理围栏";
+  geofenceActionMenu.name = "地理围栏";
   #ifdef HAS_MINI_SCREEN
-    geofenceRadiusMenu.name = "Radius (miles)";
+    geofenceRadiusMenu.name = "半径（英里）";
   #endif
   bluetoothMenu.name = text_table1[19];
   wifiSnifferMenu.name = text_table1[20];
-  wifiScannerMenu.name = "Scanners";
+  wifiScannerMenu.name = "扫描";
   wifiAttackMenu.name = text_table1[21];
   wifiGeneralMenu.name = text_table1[22];
-  saveFileMenu.name = "Save/Load Files";
-  saveSSIDsMenu.name = "Save SSIDs";
-  loadSSIDsMenu.name = "Load SSIDs";
-  saveAPsMenu.name = "Save APs";
-  loadAPsMenu.name = "Load APs";
-  saveATsMenu.name = "Save Airtags";
-  loadATsMenu.name = "Load Airtags";
+  saveFileMenu.name = "保存/载入文件";
+  saveSSIDsMenu.name = "保存SSID";
+  loadSSIDsMenu.name = "载入SSID";
+  saveAPsMenu.name = "保存热点";
+  loadAPsMenu.name = "载入热点";
+  saveATsMenu.name = "保存AirTag";
+  loadATsMenu.name = "载入AirTag";
 
   bluetoothSnifferMenu.name = text_table1[23];
-  bluetoothAttackMenu.name = "Bluetooth Attacks";
-  iBeaconMenu.name = "iBeacon Info";
+  bluetoothAttackMenu.name = "蓝牙攻击";
+  iBeaconMenu.name = "iBeacon信息";
   iBeaconInfoMenu.name = "iBeacon";
-  remoteIdMenu.name = "Remote ID Devices";
+  remoteIdMenu.name = "远程识别设备";
   generateSSIDsMenu.name = text_table1[27];
   clearSSIDsMenu.name = text_table1[28];
   clearAPsMenu.name = text_table1[29];
-  wifiAPMenu.name = "Select";
-  wifiIPMenu.name = "Active IPs";
-  apInfoMenu.name = "AP Info";
-  setMacMenu.name = "Set MACs";
-  genAPMacMenu.name = "Generate AP MAC";
-  wifiStationMenu.name = "Select Stations";
+  wifiAPMenu.name = "选择";
+  wifiIPMenu.name = "活动IP";
+  apInfoMenu.name = "热点信息";
+  setMacMenu.name = "设置MAC";
+  genAPMacMenu.name = "生成热点MAC";
+  wifiStationMenu.name = "选择终端";
 
   #ifdef HAS_DIRECT_UPLOAD
-    uploadLogsMenu.name = "Upload Logs";
-    uploadAllMenu.name = "Upload All?";
-    deleteAllMenu.name = "Delete All?";
-    actionMenu.name = "Destination";
+    uploadLogsMenu.name = "上传日志";
+    uploadAllMenu.name = "上传全部？";
+    deleteAllMenu.name = "删除全部？";
+    actionMenu.name = "目标位置";
   #endif
 
   #ifdef HAS_GPS
     gpsMenu.name = "GPS"; 
-    gpsInfoMenu.name = "GPS Data";
-    //wardrivingMenu.name = "Wardriving";
+    gpsInfoMenu.name = "GPS数据";
+    //wardrivingMenu.name = "无线巡测";
   #endif  
-  htmlMenu.name = "EP HTML List";
-  miniKbMenu.name = "Mini Keyboard";
+  htmlMenu.name = "门户HTML列表";
+  miniKbMenu.name = "迷你键盘";
 
   #ifdef HAS_SD
-    sdDeleteMenu.name = "Delete SD Files";
+    sdDeleteMenu.name = "删除SD卡文件";
   #endif
 
-  selectProbeSSIDsMenu.name = "Probe Requests";
-  evilPortalMenu.name = "Evil Portal";
-  ssidsMenu.name = "SSIDs";
+  selectProbeSSIDsMenu.name = "探测请求";
+  evilPortalMenu.name = "伪装门户";
+  ssidsMenu.name = "SSID列表";
 
   #ifdef HAS_GPS
-    gpsPOIMenu.name = "GPS POI";
+    gpsPOIMenu.name = "GPS兴趣点";
   #endif
 
-  foxHuntMenu.name = "Fox Hunt";
-
-  #if defined(MARAUDER_CYD_2USB)
-    this->addNodes(&mainMenu, "RedGuard Home", TFTORANGE, GENERAL_APPS, [this]() {
-      this->changeMenu(&redguardMenu, true);
-    });
-  #endif
+  foxHuntMenu.name = "信号寻向";
 
   // Build Main Menu
   mainMenu.parentMenu = NULL;
@@ -2244,19 +2232,19 @@ void MenuFunctions::RunSetup()
   this->addNodes(&reconMenu, text09, TFTLIGHTGREY, 0, [this]() {
     this->changeMenu(&mainMenu, true);
   });
-  this->addNodes(&reconMenu, "Start WiFi", TFTGREEN, WIFI, [this]() {
+  this->addNodes(&reconMenu, "启动Wi-Fi", TFTGREEN, WIFI, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     recon_obj.start(ReconMode::WIFI_RECON);
   });
   #ifdef HAS_BT
-    this->addNodes(&reconMenu, "Start BLE", TFTCYAN, BLUETOOTH, [this]() {
+    this->addNodes(&reconMenu, "启动BLE", TFTCYAN, BLUETOOTH, [this]() {
       display_obj.clearScreen();
       this->drawStatusBar();
       recon_obj.start(ReconMode::BLE_RECON);
     });
   #endif
-  this->addNodes(&mainMenu, "Recon", TFTMAGENTA, GENERAL_APPS, [this]() {
+  this->addNodes(&mainMenu, "侦察", TFTMAGENTA, GENERAL_APPS, [this]() {
     this->changeMenu(&reconMenu, true);
   });
   this->addNodes(&mainMenu, text_table1[7], TFTGREEN, WIFI, [this]() {
@@ -2289,11 +2277,11 @@ void MenuFunctions::RunSetup()
   this->addNodes(&wifiMenu, text_table1[31], TFTYELLOW, SNIFFERS, [this]() {
     this->changeMenu(&wifiSnifferMenu, true);
   });
-  this->addNodes(&wifiMenu, "Scanners", TFTORANGE, SCANNERS, [this]() {
+  this->addNodes(&wifiMenu, "扫描", TFTORANGE, SCANNERS, [this]() {
     this->changeMenu(&wifiScannerMenu, true);
   });
   /*#ifdef HAS_GPS
-    this->addNodes(&wifiMenu, "Wardriving", TFTGREEN, NULL, BEACON_SNIFF, [this]() {
+    this->addNodes(&wifiMenu, "无线巡测", TFTGREEN, NULL, BEACON_SNIFF, [this]() {
       this->changeMenu(&wardrivingMenu, true);
     });
   #endif*/
@@ -2309,19 +2297,19 @@ void MenuFunctions::RunSetup()
   this->addNodes(&wifiScannerMenu, text09, TFTLIGHTGREY, 0, [this]() {
     this->changeMenu(wifiScannerMenu.parentMenu, true);
   });
-  this->addNodes(&wifiScannerMenu, "Ping Scan", TFTGREEN, SCANNERS, [this]() {
+  this->addNodes(&wifiScannerMenu, "Ping扫描", TFTGREEN, SCANNERS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_PING_SCAN, TFT_CYAN);
   });
   // The C5 implementation uses the active station netif with lwIP core
   // locking, so dual-band hardware supports the same ARP scanner.
-  this->addNodes(&wifiScannerMenu, "ARP Scan", TFTCYAN, SCANNERS, [this]() {
+  this->addNodes(&wifiScannerMenu, "ARP扫描", TFTCYAN, SCANNERS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_ARP_SCAN, TFT_CYAN);
   });
-  this->addNodes(&wifiScannerMenu, "Port Scan All", TFTMAGENTA, BEACON_LIST, [this](){
+  this->addNodes(&wifiScannerMenu, "全端口扫描", TFTMAGENTA, BEACON_LIST, [this](){
     // Add the back button
     wifiIPMenu.list->clear();
       this->addNodes(&wifiIPMenu, text09, TFTLIGHTGREY, 0, [this]() {
@@ -2341,37 +2329,37 @@ void MenuFunctions::RunSetup()
     }
     this->changeMenu(&wifiIPMenu, true);
   });
-  this->addNodes(&wifiScannerMenu, "SSH Scan", TFTORANGE, SCANNERS, [this]() {
+  this->addNodes(&wifiScannerMenu, "SSH扫描", TFTORANGE, SCANNERS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_SSH, TFT_CYAN);
   });
-  this->addNodes(&wifiScannerMenu, "Telnet Scan", TFTRED, SCANNERS, [this]() {
+  this->addNodes(&wifiScannerMenu, "Telnet扫描", TFTRED, SCANNERS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_TELNET, TFT_CYAN);
   });
-  this->addNodes(&wifiScannerMenu, "SMTP Scan", TFTWHITE, SCANNERS, [this]() {
+  this->addNodes(&wifiScannerMenu, "SMTP扫描", TFTWHITE, SCANNERS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_SMTP, TFT_CYAN);
   });
-  this->addNodes(&wifiScannerMenu, "DNS Scan", TFTLIME, SCANNERS, [this]() {
+  this->addNodes(&wifiScannerMenu, "DNS扫描", TFTLIME, SCANNERS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_DNS, TFT_CYAN);
   });
-  this->addNodes(&wifiScannerMenu, "HTTP Scan", TFTSKYBLUE, SCANNERS, [this]() {
+  this->addNodes(&wifiScannerMenu, "HTTP扫描", TFTSKYBLUE, SCANNERS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_HTTP, TFT_CYAN);
   });
-  this->addNodes(&wifiScannerMenu, "HTTPS Scan", TFTYELLOW, SCANNERS, [this]() {
+  this->addNodes(&wifiScannerMenu, "HTTPS扫描", TFTYELLOW, SCANNERS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_HTTPS, TFT_CYAN);
   });
-  this->addNodes(&wifiScannerMenu, "RDP Scan", TFTPURPLE, SCANNERS, [this]() {
+  this->addNodes(&wifiScannerMenu, "RDP扫描", TFTPURPLE, SCANNERS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_RDP, TFT_CYAN);
@@ -2397,12 +2385,12 @@ void MenuFunctions::RunSetup()
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_DEAUTH, TFT_RED);
   });
-  this->addNodes(&wifiSnifferMenu, "Remote ID Scan", TFTCYAN, SCANNERS, [this]() {
+  this->addNodes(&wifiSnifferMenu, "远程识别扫描", TFTCYAN, SCANNERS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(REMOTE_ID_SCAN_ALL, TFT_CYAN);
   });
-  this->addNodes(&wifiSnifferMenu, "Remote ID Devices", TFTMAGENTA, SCANNERS, [this]() {
+  this->addNodes(&wifiSnifferMenu, "远程识别设备", TFTMAGENTA, SCANNERS, [this]() {
     remoteIdMenu.list->clear();
     remoteIdMenu.parentMenu = &wifiSnifferMenu;
     this->addNodes(&remoteIdMenu, text09, TFTLIGHTGREY, 0, [this]() {
@@ -2419,7 +2407,7 @@ void MenuFunctions::RunSetup()
     }
     this->changeMenu(&remoteIdMenu, true);
   });
-  this->addNodes(&wifiSnifferMenu, "Packet Count", TFTORANGE, PACKET_MONITOR, [this]() {
+  this->addNodes(&wifiSnifferMenu, "数据包计数", TFTORANGE, PACKET_MONITOR, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_PACKET_RATE, TFT_ORANGE);
@@ -2446,13 +2434,13 @@ void MenuFunctions::RunSetup()
       wifi_scan_obj.StartScan(WIFI_PACKET_MONITOR, TFT_BLUE);
     });
   #endif
-  this->addNodes(&wifiSnifferMenu, "Channel Analyzer", TFTCYAN, PACKET_MONITOR, [this]() {
+  this->addNodes(&wifiSnifferMenu, "信道分析", TFTCYAN, PACKET_MONITOR, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     this->renderGraphUI(WIFI_SCAN_CHAN_ANALYZER);
     wifi_scan_obj.StartScan(WIFI_SCAN_CHAN_ANALYZER, TFT_CYAN);
   });
-  this->addNodes(&wifiSnifferMenu, "Channel Summary", TFTORANGE, PACKET_MONITOR, [this]() {
+  this->addNodes(&wifiSnifferMenu, "信道概览", TFTORANGE, PACKET_MONITOR, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     this->renderGraphUI(WIFI_SCAN_CHAN_ACT);
@@ -2482,25 +2470,25 @@ void MenuFunctions::RunSetup()
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_MULTISSID, TFT_ORANGE);
   });
-  this->addNodes(&wifiSnifferMenu, "Scan AP/STA", TFTLIME, BEACON_SNIFF, [this]() {
+  this->addNodes(&wifiSnifferMenu, "扫描热点/终端", TFTLIME, BEACON_SNIFF, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_AP_STA, 0x97e0);
   });
-  /*this->addNodes(&wifiSnifferMenu, "Fox Hunt", TFTCYAN, PACKET_MONITOR, [this]() {
+  /*this->addNodes(&wifiSnifferMenu, "信号寻向", TFTCYAN, PACKET_MONITOR, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_SIG_STREN, TFT_CYAN);
   });*/
-  this->addNodes(&wifiSnifferMenu, "Fox Hunt", TFTCYAN, SCANNERS, [this]() {
+  this->addNodes(&wifiSnifferMenu, "信号寻向", TFTCYAN, SCANNERS, [this]() {
     this->buildWiFiFoxHuntMenu();
   });
-  this->addNodes(&wifiSnifferMenu, "MAC Monitor", TFTMAGENTA, SCANNERS, [this]() {
+  this->addNodes(&wifiSnifferMenu, "MAC监视", TFTMAGENTA, SCANNERS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_DETECT_FOLLOW, TFT_MAGENTA);
   });
-  this->addNodes(&wifiSnifferMenu, "SAE Commit", TFTLIME, EAPOL, [this]() {
+  this->addNodes(&wifiSnifferMenu, "SAE提交", TFTLIME, EAPOL, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_SCAN_SAE_COMMIT, TFT_GREEN);
@@ -2513,7 +2501,7 @@ void MenuFunctions::RunSetup()
       this->changeMenu(wardrivingMenu.parentMenu, true);
     });*/
     if (gps_obj.getGpsModuleStatus()) {
-      this->addNodes(&wifiSnifferMenu, "Wardrive", TFTGREEN, BEACON_SNIFF, [this]() {
+      this->addNodes(&wifiSnifferMenu, "无线巡测", TFTGREEN, BEACON_SNIFF, [this]() {
         display_obj.clearScreen();
         this->drawStatusBar();
         wifi_scan_obj.StartScan(WIFI_SCAN_WAR_DRIVE, TFT_GREEN);
@@ -2522,7 +2510,7 @@ void MenuFunctions::RunSetup()
   #endif
   /*#ifdef HAS_GPS
     if (gps_obj.getGpsModuleStatus()) {
-      this->addNodes(&wardrivingMenu, "Station Wardrive", TFTORANGE, NULL, PROBE_SNIFF, [this]() {
+      this->addNodes(&wardrivingMenu, "终端巡测", TFTORANGE, NULL, PROBE_SNIFF, [this]() {
         display_obj.clearScreen();
         this->drawStatusBar();
         wifi_scan_obj.StartScan(WIFI_SCAN_STATION_WAR_DRIVE, TFT_ORANGE);
@@ -2560,7 +2548,7 @@ void MenuFunctions::RunSetup()
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_ATTACK_AUTH, TFT_RED);
   });
-  this->addNodes(&wifiAttackMenu, "Evil Portal", TFTORANGE, BEACON_SNIFF, [this]() {
+  this->addNodes(&wifiAttackMenu, "伪装门户", TFTORANGE, BEACON_SNIFF, [this]() {
 
     wifiAPMenu.list->clear();
     ssidsMenu.list->clear();
@@ -2651,37 +2639,37 @@ void MenuFunctions::RunSetup()
     this->changeMenu(&selectProbeSSIDsMenu, true);
   });
 
-  this->addNodes(&wifiAttackMenu, "Bad Msg", TFTRED, DEAUTH_SNIFF, [this]() {
+  this->addNodes(&wifiAttackMenu, "异常报文", TFTRED, DEAUTH_SNIFF, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_ATTACK_BAD_MSG, TFT_RED);
   });
-  this->addNodes(&wifiAttackMenu, "Bad Msg Targeted", TFTYELLOW, DEAUTH_SNIFF, [this]() {
+  this->addNodes(&wifiAttackMenu, "定向异常报文", TFTYELLOW, DEAUTH_SNIFF, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_ATTACK_BAD_MSG_TARGETED, TFT_YELLOW);
   });
-  this->addNodes(&wifiAttackMenu, "Assoc Sleep", TFTRED, DEAUTH_SNIFF, [this]() {
+  this->addNodes(&wifiAttackMenu, "关联休眠", TFTRED, DEAUTH_SNIFF, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_ATTACK_SLEEP, TFT_RED);
   });
-  this->addNodes(&wifiAttackMenu, "Assoc Sleep Targ", TFTMAGENTA, DEAUTH_SNIFF, [this]() {
+  this->addNodes(&wifiAttackMenu, "定向关联休眠", TFTMAGENTA, DEAUTH_SNIFF, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_ATTACK_SLEEP_TARGETED, TFT_MAGENTA);
   });
-  this->addNodes(&wifiAttackMenu, "SAE Commit Flood", TFTLIME, EAPOL, [this]() {
+  this->addNodes(&wifiAttackMenu, "SAE提交洪泛", TFTLIME, EAPOL, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_ATTACK_SAE_COMMIT, TFT_GREEN);
   });
-  this->addNodes(&wifiAttackMenu, "Channel Switch", TFTORANGE, BEACON_LIST, [this]() {
+  this->addNodes(&wifiAttackMenu, "切换信道", TFTORANGE, BEACON_LIST, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_ATTACK_CSA, TFT_GREEN);
   });
-  this->addNodes(&wifiAttackMenu, "Quiet Time", TFTRED, BEACON_LIST, [this]() {
+  this->addNodes(&wifiAttackMenu, "静默时间", TFTRED, BEACON_LIST, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(WIFI_ATTACK_QUIET, TFT_GREEN);
@@ -2691,7 +2679,7 @@ void MenuFunctions::RunSetup()
   this->addNodes(&evilPortalMenu, text09, TFTLIGHTGREY, 0, [this]() {
     this->changeMenu(evilPortalMenu.parentMenu, true);
   });
-  this->addNodes(&evilPortalMenu, "AP Config", TFTMAGENTA, SD_UPDATE, [this]() {
+  this->addNodes(&evilPortalMenu, "热点配置", TFTMAGENTA, SD_UPDATE, [this]() {
     if (evil_portal_obj.setAPFromConfig()) {
       display_obj.clearScreen();
       this->drawStatusBar();
@@ -2701,10 +2689,10 @@ void MenuFunctions::RunSetup()
     else
       this->changeMenu(&evilPortalMenu, true);
   });
-  this->addNodes(&evilPortalMenu, "Access Points", TFTGREEN, BEACON_SNIFF, [this]() {
+  this->addNodes(&evilPortalMenu, "接入点", TFTGREEN, BEACON_SNIFF, [this]() {
     this->changeMenu(&wifiAPMenu, true);
   });
-  this->addNodes(&evilPortalMenu, "User SSIDs", TFTCYAN, PROBE_SNIFF, [this]() {
+  this->addNodes(&evilPortalMenu, "用户SSID", TFTCYAN, PROBE_SNIFF, [this]() {
     this->changeMenu(&ssidsMenu, true);
   });
 
@@ -2820,7 +2808,7 @@ void MenuFunctions::RunSetup()
     wifi_scan_obj.RunClearStations();
   });
   //#else // Mini EP HTML select
-    this->addNodes(&wifiGeneralMenu, "Select EP HTML File", TFTCYAN, KEYBOARD_ICO, [this](){
+    this->addNodes(&wifiGeneralMenu, "选择门户HTML", TFTCYAN, KEYBOARD_ICO, [this](){
       // Add the back button
       htmlMenu.list->clear();
         this->addNodes(&htmlMenu, text09, TFTLIGHTGREY, 0, [this]() {
@@ -2857,7 +2845,7 @@ void MenuFunctions::RunSetup()
     });
 
     // Select APs on Mini
-    this->addNodes(&wifiGeneralMenu, "Select APs", TFTNAVY, KEYBOARD_ICO, [this](){
+    this->addNodes(&wifiGeneralMenu, "选择热点", TFTNAVY, KEYBOARD_ICO, [this](){
       wifiAPMenu.parentMenu = &wifiGeneralMenu;
       // Add the back button
       wifiAPMenu.list->clear();
@@ -2865,7 +2853,7 @@ void MenuFunctions::RunSetup()
         this->changeMenu(wifiAPMenu.parentMenu, true);
       });
 
-      this->addNodes(&wifiAPMenu, "Select ALL", TFTGREEN, 255, [this](){
+      this->addNodes(&wifiAPMenu, "全选", TFTGREEN, 255, [this](){
 
         for (int x = 0; x < access_points->size(); x++) {
           AccessPoint new_ap = access_points->get(x);
@@ -2899,7 +2887,7 @@ void MenuFunctions::RunSetup()
       this->changeMenu(&wifiAPMenu, true);
     });
 
-    this->addNodes(&wifiGeneralMenu, "View AP Info", TFTCYAN, KEYBOARD_ICO, [this](){
+    this->addNodes(&wifiGeneralMenu, "查看热点信息", TFTCYAN, KEYBOARD_ICO, [this](){
       wifiAPMenu.parentMenu = &wifiGeneralMenu;
       
       // Add the back button
@@ -2936,7 +2924,7 @@ void MenuFunctions::RunSetup()
 
 
     // Select Stations on Mini v2
-    this->addNodes(&wifiGeneralMenu, "Select Stations", TFTCYAN, KEYBOARD_ICO, [this](){
+    this->addNodes(&wifiGeneralMenu, "选择终端", TFTCYAN, KEYBOARD_ICO, [this](){
       wifiAPMenu.parentMenu = &wifiGeneralMenu;
 
       wifiAPMenu.list->clear();
@@ -2960,7 +2948,7 @@ void MenuFunctions::RunSetup()
             this->changeMenu(wifiStationMenu.parentMenu, true);
           });
 
-          this->addNodes(&wifiStationMenu, "Select ALL", TFTGREEN, 255, [this, i](){
+          this->addNodes(&wifiStationMenu, "全选", TFTGREEN, 255, [this, i](){
 
             for (int y = 0; y < access_points->get(i).stations->size(); y++) {
               int cur_ap_sta_inx = access_points->get(i).stations->get(y);
@@ -3004,7 +2992,7 @@ void MenuFunctions::RunSetup()
       this->changeMenu(&wifiAPMenu, true);
     });
 
-    this->addNodes(&wifiGeneralMenu, "Join WiFi", TFTWHITE, KEYBOARD_ICO, [this](){
+    this->addNodes(&wifiGeneralMenu, "连接Wi-Fi", TFTWHITE, KEYBOARD_ICO, [this](){
 
       wifiAPMenu.parentMenu = &wifiGeneralMenu;
 
@@ -3036,7 +3024,7 @@ void MenuFunctions::RunSetup()
               #else
                 display_obj.clearScreen();
                 display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
-                display_obj.tft.drawString("Connecting to:", 0, 12, 1);
+                display_obj.tft.drawString("正在连接：", 0, 12, 1);
                 display_obj.tft.drawString(access_points->get(i).essid.substring(0, 21), 0, 24, 1);
                 display_obj.tft.display(true);
               #endif
@@ -3044,7 +3032,7 @@ void MenuFunctions::RunSetup()
               #ifdef MARAUDER_POOM
                 display_obj.clearScreen();
                 display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
-                display_obj.tft.drawCentreString(connected ? "Connected" : "Connection failed",
+                display_obj.tft.drawCentreString(connected ? "已连接" : "连接失败",
                                                  SCREEN_WIDTH / 2, 20, 1);
                 display_obj.tft.drawCentreString(access_points->get(i).essid.substring(0, 21),
                                                  SCREEN_WIDTH / 2, 34, 1);
@@ -3085,17 +3073,17 @@ void MenuFunctions::RunSetup()
       this->changeMenu(&wifiAPMenu, true);
     });
 
-    this->addNodes(&wifiGeneralMenu, "Join Saved WiFi", TFTWHITE, KEYBOARD_ICO, [this](){
+    this->addNodes(&wifiGeneralMenu, "连接已存Wi-Fi", TFTWHITE, KEYBOARD_ICO, [this](){
       wifi_scan_obj.joinSavedWiFi(true);
       this->changeMenu(&wifiGeneralMenu, true);
     });
 
-    this->addNodes(&wifiGeneralMenu, "Manage Saved WiFi", TFTWHITE, SETTINGS, [this](){
+    this->addNodes(&wifiGeneralMenu, "管理已存Wi-Fi", TFTWHITE, SETTINGS, [this](){
       this->buildSavedWifiMenu(false);
       this->changeMenu(&savedWifiMenu, true);
     });
 
-    this->addNodes(&wifiGeneralMenu, "Start AP", TFTGREEN, KEYBOARD_ICO, [this](){
+    this->addNodes(&wifiGeneralMenu, "启动热点", TFTGREEN, KEYBOARD_ICO, [this](){
       ssidsMenu.parentMenu = &wifiGeneralMenu;
 
       // Add the back button
@@ -3136,7 +3124,7 @@ void MenuFunctions::RunSetup()
       this->changeMenu(&ssidsMenu, true);
     });
 
-    this->addNodes(&wifiGeneralMenu, "Host AP Info", TFTGREEN, BEACON_SNIFF, [this]() {
+    this->addNodes(&wifiGeneralMenu, "所属热点信息", TFTGREEN, BEACON_SNIFF, [this]() {
       display_obj.clearScreen();
       this->drawStatusBar();
       wifi_scan_obj.StartScan(WIFI_SCAN_DISPLAY_AP_INFO, TFT_GREEN);
@@ -3147,11 +3135,11 @@ void MenuFunctions::RunSetup()
       this->changeMenu(wifiStationMenu.parentMenu, true);
     });
 
-  this->addNodes(&wifiGeneralMenu, "Set MACs", TFTLIGHTGREY, 0, [this]() {
+  this->addNodes(&wifiGeneralMenu, "设置MAC", TFTLIGHTGREY, 0, [this]() {
     this->changeMenu(&setMacMenu, true);
   });
 
-  this->addNodes(&wifiGeneralMenu, "Shutdown WiFi", TFTRED, 0, [this]() {
+  this->addNodes(&wifiGeneralMenu, "关闭Wi-Fi", TFTRED, 0, [this]() {
     WiFi.softAPdisconnect(true); // Also shut down the SoftAP if it is running
 	WiFi.disconnect(true);
     delay(100);
@@ -3160,12 +3148,12 @@ void MenuFunctions::RunSetup()
   });
   
   #ifdef HAS_DIRECT_UPLOAD
-    this->addNodes(&wifiGeneralMenu, "Upload Wardrive Logs", TFTGREEN, 0, [this]() {
+    this->addNodes(&wifiGeneralMenu, "上传巡测日志", TFTGREEN, 0, [this]() {
       display_obj.clearScreen();
       display_obj.tft.setTextWrap(false);
       display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
       display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
-      display_obj.tft.println("Loading...");
+      display_obj.tft.println("正在载入…");
 
       this->buildUploadFileMenu();
 
@@ -3183,8 +3171,8 @@ void MenuFunctions::RunSetup()
         display_obj.clearScreen();
         display_obj.tft.setTextWrap(true);
         display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-        display_obj.tft.println("WiFi Credentials Empty.");
-        display_obj.tft.println("Returning...");
+        display_obj.tft.println("Wi-Fi凭据为空");
+        display_obj.tft.println("正在返回…");
         display_obj.tft.setTextWrap(false);
       }
       else {
@@ -3192,8 +3180,8 @@ void MenuFunctions::RunSetup()
           display_obj.clearScreen();
           display_obj.tft.setTextWrap(true);
           display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-          display_obj.tft.println("Could not connect to WiFi.");
-          display_obj.tft.println("Returning...");
+          display_obj.tft.println("无法连接Wi-Fi");
+          display_obj.tft.println("正在返回…");
           display_obj.tft.setTextWrap(false);
         }
         else {
@@ -3204,10 +3192,10 @@ void MenuFunctions::RunSetup()
                 Serial.println("Uploading " + sd_obj.sd_files->get(i) + "...");
                 if (wifi_scan_obj.uploadFile("/" + sd_obj.sd_files->get(i), true, WIGLE_UPLOAD)) {
                   display_obj.clearScreen();
-                  display_obj.showCenterText("WiGLE OK", TFT_HEIGHT / 2);
+                  display_obj.showCenterText("WiGLE成功", TFT_HEIGHT / 2);
                 } else {
                   display_obj.clearScreen();
-                  display_obj.showCenterText("WiGLE failed", TFT_HEIGHT / 2);
+                  display_obj.showCenterText("WiGLE失败", TFT_HEIGHT / 2);
                 }
               }
             }
@@ -3229,8 +3217,8 @@ void MenuFunctions::RunSetup()
         display_obj.clearScreen();
         display_obj.tft.setTextWrap(true);
         display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-        display_obj.tft.println("WiFi Credentials Empty.");
-        display_obj.tft.println("Returning...");
+        display_obj.tft.println("Wi-Fi凭据为空");
+        display_obj.tft.println("正在返回…");
         display_obj.tft.setTextWrap(false);
       }
       else {
@@ -3238,8 +3226,8 @@ void MenuFunctions::RunSetup()
           display_obj.clearScreen();
           display_obj.tft.setTextWrap(true);
           display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-          display_obj.tft.println("Could not connect to WiFi.");
-          display_obj.tft.println("Returning...");
+          display_obj.tft.println("无法连接Wi-Fi");
+          display_obj.tft.println("正在返回…");
           display_obj.tft.setTextWrap(false);
         }
         else {
@@ -3250,10 +3238,10 @@ void MenuFunctions::RunSetup()
                 Serial.println("Uploading " + sd_obj.sd_files->get(i) + "...");
                 if (wifi_scan_obj.uploadFile("/" + sd_obj.sd_files->get(i), true, WDG_UPLOAD)) {
                   display_obj.clearScreen();
-                  display_obj.showCenterText("WDG OK", TFT_HEIGHT / 2);
+                  display_obj.showCenterText("WDG成功", TFT_HEIGHT / 2);
                 } else {
                   display_obj.clearScreen();
-                  display_obj.showCenterText("WDG failed", TFT_HEIGHT / 2);
+                  display_obj.showCenterText("WDG失败", TFT_HEIGHT / 2);
                 }
               }
             }
@@ -3268,15 +3256,15 @@ void MenuFunctions::RunSetup()
 
       this->changeMenu(uploadAllMenu.parentMenu, true);
     });
-    this->addNodes(&uploadAllMenu, "Both", TFTLIGHTGREY, 0, [this]() {
+    this->addNodes(&uploadAllMenu, "两者", TFTLIGHTGREY, 0, [this]() {
       display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
 
       if (settings_obj.getSavedWifiCount() == 0) {
         display_obj.clearScreen();
         display_obj.tft.setTextWrap(true);
         display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-        display_obj.tft.println("WiFi Credentials Empty.");
-        display_obj.tft.println("Returning...");
+        display_obj.tft.println("Wi-Fi凭据为空");
+        display_obj.tft.println("正在返回…");
         display_obj.tft.setTextWrap(false);
       }
       else {
@@ -3284,8 +3272,8 @@ void MenuFunctions::RunSetup()
           display_obj.clearScreen();
           display_obj.tft.setTextWrap(true);
           display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-          display_obj.tft.println("Could not connect to WiFi.");
-          display_obj.tft.println("Returning...");
+          display_obj.tft.println("无法连接Wi-Fi");
+          display_obj.tft.println("正在返回…");
           display_obj.tft.setTextWrap(false);
         }
         else {
@@ -3296,10 +3284,10 @@ void MenuFunctions::RunSetup()
                 Serial.println("Uploading " + sd_obj.sd_files->get(i) + "...");
                 if (wifi_scan_obj.uploadFile("/" + sd_obj.sd_files->get(i), true, BOTH_UPLOAD)) {
                   display_obj.clearScreen();
-                  display_obj.showCenterText("Upload OK", TFT_HEIGHT / 2);
+                  display_obj.showCenterText("上传成功", TFT_HEIGHT / 2);
                 } else {
                   display_obj.clearScreen();
-                  display_obj.showCenterText("Upload failed", TFT_HEIGHT / 2);
+                  display_obj.showCenterText("上传失败", TFT_HEIGHT / 2);
                 }
               }
             }
@@ -3316,15 +3304,15 @@ void MenuFunctions::RunSetup()
     });
 
     deleteAllMenu.parentMenu = &uploadLogsMenu;
-    this->addNodes(&deleteAllMenu, "No", TFTLIGHTGREY, 0, [this]() {
+    this->addNodes(&deleteAllMenu, "否", TFTLIGHTGREY, 0, [this]() {
       this->changeMenu(deleteAllMenu.parentMenu, true);
     });
-    this->addNodes(&deleteAllMenu, "Yes", TFTRED, 0, [this]() {
+    this->addNodes(&deleteAllMenu, "是", TFTRED, 0, [this]() {
       display_obj.tft.setTextColor(TFT_ORANGE, TFT_BLACK);
 
       display_obj.clearScreen();
 
-      display_obj.showCenterText("Deleting logs...", TFT_HEIGHT / 2, true);
+      display_obj.showCenterText("正在删除日志…", TFT_HEIGHT / 2, true);
 
       for (int i = 0; i < sd_obj.sd_files->size(); i++) {
         if (sd_obj.sd_files->get(i).startsWith("wardrive_") || sd_obj.sd_files->get(i).startsWith("wigle-")) {
@@ -3340,7 +3328,7 @@ void MenuFunctions::RunSetup()
       }
       display_obj.clearScreen();
 
-      display_obj.showCenterText("Logs removed", TFT_HEIGHT / 2, true);
+      display_obj.showCenterText("日志已删除", TFT_HEIGHT / 2, true);
 
       delay(2000);
 
@@ -3360,8 +3348,8 @@ void MenuFunctions::RunSetup()
         display_obj.clearScreen();
         display_obj.tft.setTextWrap(true);
         display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-        display_obj.tft.println("WiFi Credentials Empty.");
-        display_obj.tft.println("Returning...");
+        display_obj.tft.println("Wi-Fi凭据为空");
+        display_obj.tft.println("正在返回…");
         display_obj.tft.setTextWrap(false);
       }
       else {
@@ -3370,8 +3358,8 @@ void MenuFunctions::RunSetup()
           display_obj.tft.setTextWrap(true);
           display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
           display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
-          display_obj.tft.println("Could not connect to WiFi.");
-          display_obj.tft.println("Returning...");
+          display_obj.tft.println("无法连接Wi-Fi");
+          display_obj.tft.println("正在返回…");
           display_obj.tft.setTextWrap(false);
         }
         else {
@@ -3379,10 +3367,10 @@ void MenuFunctions::RunSetup()
           Serial.println("Uploading " + sd_obj.selected_file_name + "...");
           if (wifi_scan_obj.uploadFile("/" + sd_obj.selected_file_name, true, WIGLE_UPLOAD)) {
             display_obj.clearScreen();
-            display_obj.showCenterText("WiGLE OK", TFT_HEIGHT / 2, true);
+            display_obj.showCenterText("WiGLE成功", TFT_HEIGHT / 2, true);
           } else {
             display_obj.clearScreen();
-            display_obj.showCenterText("WiGLE failed", TFT_HEIGHT / 2, true);
+            display_obj.showCenterText("WiGLE失败", TFT_HEIGHT / 2, true);
           }
 
           WiFi.disconnect(true);
@@ -3402,8 +3390,8 @@ void MenuFunctions::RunSetup()
         display_obj.clearScreen();
         display_obj.tft.setTextWrap(true);
         display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-        display_obj.tft.println("WiFi Credentials Empty.");
-        display_obj.tft.println("Returning...");
+        display_obj.tft.println("Wi-Fi凭据为空");
+        display_obj.tft.println("正在返回…");
         display_obj.tft.setTextWrap(false);
       }
       else {
@@ -3411,8 +3399,8 @@ void MenuFunctions::RunSetup()
           display_obj.clearScreen();
           display_obj.tft.setTextWrap(true);
           display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-          display_obj.tft.println("Could not connect to WiFi.");
-          display_obj.tft.println("Returning...");
+          display_obj.tft.println("无法连接Wi-Fi");
+          display_obj.tft.println("正在返回…");
           display_obj.tft.setTextWrap(false);
         }
         else {
@@ -3420,10 +3408,10 @@ void MenuFunctions::RunSetup()
           Serial.println("Uploading " + sd_obj.selected_file_name + "...");
           if (wifi_scan_obj.uploadFile("/" + sd_obj.selected_file_name, true, WDG_UPLOAD)) {
             display_obj.clearScreen();
-            display_obj.showCenterText("WDG OK", TFT_HEIGHT / 2, true);
+            display_obj.showCenterText("WDG成功", TFT_HEIGHT / 2, true);
           } else {
             display_obj.clearScreen();
-            display_obj.showCenterText("WDG failed", TFT_HEIGHT / 2, true);
+            display_obj.showCenterText("WDG失败", TFT_HEIGHT / 2, true);
           }
 
           WiFi.disconnect(true);
@@ -3436,15 +3424,15 @@ void MenuFunctions::RunSetup()
 
       this->changeMenu(&actionMenu, true);
     });
-    this->addNodes(&actionMenu, "Both", TFTLIGHTGREY, 0, [this]() {
+    this->addNodes(&actionMenu, "两者", TFTLIGHTGREY, 0, [this]() {
       display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
 
       if (settings_obj.getSavedWifiCount() == 0) {
         display_obj.clearScreen();
         display_obj.tft.setTextWrap(true);
         display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-        display_obj.tft.println("WiFi Credentials Empty.");
-        display_obj.tft.println("Returning...");
+        display_obj.tft.println("Wi-Fi凭据为空");
+        display_obj.tft.println("正在返回…");
         display_obj.tft.setTextWrap(false);
       }
       else {
@@ -3452,8 +3440,8 @@ void MenuFunctions::RunSetup()
           display_obj.clearScreen();
           display_obj.tft.setTextWrap(true);
           display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-          display_obj.tft.println("Could not connect to WiFi.");
-          display_obj.tft.println("Returning...");
+          display_obj.tft.println("无法连接Wi-Fi");
+          display_obj.tft.println("正在返回…");
           display_obj.tft.setTextWrap(false);
         }
         else {
@@ -3461,10 +3449,10 @@ void MenuFunctions::RunSetup()
           Serial.println("Uploading " + sd_obj.selected_file_name + "...");
           if (wifi_scan_obj.uploadFile("/" + sd_obj.selected_file_name, true, BOTH_UPLOAD)) {
             display_obj.clearScreen();
-            display_obj.showCenterText("Upload OK", TFT_HEIGHT / 2, true);
+            display_obj.showCenterText("上传成功", TFT_HEIGHT / 2, true);
           } else {
             display_obj.clearScreen();
-            display_obj.showCenterText("Upload failed", TFT_HEIGHT / 2, true);
+            display_obj.showCenterText("上传失败", TFT_HEIGHT / 2, true);
           }
 
           WiFi.disconnect(true);
@@ -3487,20 +3475,20 @@ void MenuFunctions::RunSetup()
   });
 
   // Generate random MAC for AP
-  this->addNodes(&setMacMenu, "Generate AP MAC", TFTLIME, 0, [this]() {
+  this->addNodes(&setMacMenu, "生成热点MAC", TFTLIME, 0, [this]() {
     this->changeMenu(&genAPMacMenu, true);
     wifi_scan_obj.RunGenerateRandomMac(true);
   });
 
   // Generate random MAC for AP
-  this->addNodes(&setMacMenu, "Generate STA MAC", TFTCYAN, 0, [this]() {
+  this->addNodes(&setMacMenu, "生成终端MAC", TFTCYAN, 0, [this]() {
     this->changeMenu(&genAPMacMenu, true);
     wifi_scan_obj.RunGenerateRandomMac(false);
   });
 
   // Clone AP MAC to ESP32 for button folks
   //#ifndef HAS_ILI9341
-    this->addNodes(&setMacMenu, "Clone AP MAC", TFTRED, CLEAR_ICO, [this](){
+    this->addNodes(&setMacMenu, "克隆热点MAC", TFTRED, CLEAR_ICO, [this](){
       wifiAPMenu.parentMenu = &wifiGeneralMenu;
 
       // Add the back button
@@ -3520,7 +3508,7 @@ void MenuFunctions::RunSetup()
       this->changeMenu(&wifiAPMenu, true);
     });
 
-    this->addNodes(&setMacMenu, "Clone STA MAC", TFTMAGENTA, CLEAR_ICO, [this](){
+    this->addNodes(&setMacMenu, "克隆终端MAC", TFTMAGENTA, CLEAR_ICO, [this](){
       wifiAPMenu.parentMenu = &wifiGeneralMenu;
 
       // Add the back button
@@ -3572,7 +3560,7 @@ void MenuFunctions::RunSetup()
   this->addNodes(&bluetoothMenu, text_table1[31], TFTYELLOW, SNIFFERS, [this]() {
     this->changeMenu(&bluetoothSnifferMenu, true);
   });
-  this->addNodes(&bluetoothMenu, "Bluetooth Attacks", TFTRED, ATTACKS, [this]() {
+  this->addNodes(&bluetoothMenu, "蓝牙攻击", TFTRED, ATTACKS, [this]() {
     this->changeMenu(&bluetoothAttackMenu, true);
   });
 
@@ -3586,22 +3574,22 @@ void MenuFunctions::RunSetup()
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_SCAN_ALL, TFT_GREEN);
   });
-  this->addNodes(&bluetoothSnifferMenu, "Flipper Sniff", TFTORANGE, FLIPPER, [this]() {
+  this->addNodes(&bluetoothSnifferMenu, "Flipper侦听", TFTORANGE, FLIPPER, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_SCAN_FLIPPER, TFT_ORANGE);
   });
-  this->addNodes(&bluetoothSnifferMenu, "FindMy Sniff", TFTWHITE, BLUETOOTH_SNIFF, [this]() {
+  this->addNodes(&bluetoothSnifferMenu, "FindMy侦听", TFTWHITE, BLUETOOTH_SNIFF, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_SCAN_AIRTAG, TFT_WHITE);
   });
-  this->addNodes(&bluetoothSnifferMenu, "iBeacon Sniff", TFTCYAN, BLUETOOTH_SNIFF, [this]() {
+  this->addNodes(&bluetoothSnifferMenu, "iBeacon侦听", TFTCYAN, BLUETOOTH_SNIFF, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_SCAN_IBEACON, TFT_CYAN);
   });
-  this->addNodes(&bluetoothSnifferMenu, "iBeacon Info", TFTCYAN, KEYBOARD_ICO, [this]() {
+  this->addNodes(&bluetoothSnifferMenu, "iBeacon信息", TFTCYAN, KEYBOARD_ICO, [this]() {
     iBeaconMenu.list->clear();
     iBeaconMenu.parentMenu = &bluetoothSnifferMenu;
     this->addNodes(&iBeaconMenu, text09, TFTLIGHTGREY, 0, [this]() {
@@ -3644,7 +3632,7 @@ void MenuFunctions::RunSetup()
     }
     this->changeMenu(&iBeaconMenu, true);
   });
-  this->addNodes(&bluetoothSnifferMenu, "FindMy Monitor", TFTWHITE, BLUETOOTH_SNIFF, [this]() {
+  this->addNodes(&bluetoothSnifferMenu, "FindMy监视", TFTWHITE, BLUETOOTH_SNIFF, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_SCAN_AIRTAG_MON, TFT_WHITE);
@@ -3654,23 +3642,23 @@ void MenuFunctions::RunSetup()
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_SCAN_SKIMMERS, TFT_MAGENTA);
   });
-  this->addNodes(&bluetoothSnifferMenu, "Bluetooth Analyzer", TFTCYAN, PACKET_MONITOR, [this]() {
+  this->addNodes(&bluetoothSnifferMenu, "蓝牙分析", TFTCYAN, PACKET_MONITOR, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     this->renderGraphUI(BT_SCAN_ANALYZER);
     wifi_scan_obj.StartScan(BT_SCAN_ANALYZER, TFT_CYAN);
   });
-  this->addNodes(&bluetoothSnifferMenu, "Flock Sniff", TFTORANGE, FLOCK, [this]() {
+  this->addNodes(&bluetoothSnifferMenu, "Flock侦听", TFTORANGE, FLOCK, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_SCAN_FLOCK, TFT_ORANGE);
   });
-  this->addNodes(&bluetoothSnifferMenu, "Meta Detect", TFTWHITE, BLUETOOTH_SNIFF, [this]() {
+  this->addNodes(&bluetoothSnifferMenu, "Meta检测", TFTWHITE, BLUETOOTH_SNIFF, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_SCAN_RAYBAN, TFT_CYAN);
   });
-  this->addNodes(&bluetoothSnifferMenu, "Fox Hunt", TFTCYAN, SCANNERS, [this]() {
+  this->addNodes(&bluetoothSnifferMenu, "信号寻向", TFTCYAN, SCANNERS, [this]() {
     this->buildBluetoothFoxHuntMenu();
   });
 
@@ -3684,32 +3672,32 @@ void MenuFunctions::RunSetup()
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_ATTACK_SOUR_APPLE, TFT_GREEN);
   });
-  this->addNodes(&bluetoothAttackMenu, "Apple Juice", TFTYELLOW, DEAUTH_SNIFF, [this]() {
+  this->addNodes(&bluetoothAttackMenu, "AppleJuice", TFTYELLOW, DEAUTH_SNIFF, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_ATTACK_APPLE_JUICE, TFT_YELLOW);
   });
-  this->addNodes(&bluetoothAttackMenu, "Swiftpair Spam", TFTCYAN, KEYBOARD_ICO, [this]() {
+  this->addNodes(&bluetoothAttackMenu, "Swiftpair发送", TFTCYAN, KEYBOARD_ICO, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_ATTACK_SWIFTPAIR_SPAM, TFT_CYAN);
   });
-  this->addNodes(&bluetoothAttackMenu, "Samsung BLE Spam", TFTRED, GENERAL_APPS, [this]() {
+  this->addNodes(&bluetoothAttackMenu, "Samsung BLE发送", TFTRED, GENERAL_APPS, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_ATTACK_SAMSUNG_SPAM, TFT_RED);
   });
-  this->addNodes(&bluetoothAttackMenu, "Google BLE Spam", TFTPURPLE, LANGUAGE, [this]() {
+  this->addNodes(&bluetoothAttackMenu, "Google BLE发送", TFTPURPLE, LANGUAGE, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_ATTACK_GOOGLE_SPAM, TFT_PURPLE);
   });
-  this->addNodes(&bluetoothAttackMenu, "Flipper BLE Spam", TFTORANGE, FLIPPER, [this]() {
+  this->addNodes(&bluetoothAttackMenu, "Flipper BLE发送", TFTORANGE, FLIPPER, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_ATTACK_FLIPPER_SPAM, TFT_ORANGE);
   });
-  this->addNodes(&bluetoothAttackMenu, "BLE Spam All", TFTMAGENTA, DEAUTH_SNIFF, [this]() {
+  this->addNodes(&bluetoothAttackMenu, "全部BLE发送", TFTMAGENTA, DEAUTH_SNIFF, [this]() {
     display_obj.clearScreen();
     this->drawStatusBar();
     wifi_scan_obj.StartScan(BT_ATTACK_SPAM_ALL, TFT_MAGENTA);
@@ -3719,7 +3707,7 @@ void MenuFunctions::RunSetup()
 
   //#ifndef HAS_ILI9341
     #ifdef HAS_BT
-      this->addNodes(&bluetoothAttackMenu, "Spoof Airtag", TFTWHITE, ATTACKS, [this](){
+      this->addNodes(&bluetoothAttackMenu, "模拟AirTag", TFTWHITE, ATTACKS, [this](){
           wifiAPMenu.parentMenu = &bluetoothAttackMenu;
 
           // Clear nodes and add back button
@@ -3764,7 +3752,7 @@ void MenuFunctions::RunSetup()
       });
 
       #ifdef HAS_NIMBLE_2
-      this->addNodes(&bluetoothAttackMenu, "FindMy Sound", TFTCYAN, ATTACKS, [this](){
+      this->addNodes(&bluetoothAttackMenu, "FindMy发声", TFTCYAN, ATTACKS, [this](){
           wifiAPMenu.parentMenu = &bluetoothAttackMenu;
 
           // Clear nodes and add back button
@@ -3773,7 +3761,7 @@ void MenuFunctions::RunSetup()
           this->changeMenu(wifiAPMenu.parentMenu, true);
         });
 
-        /*this->addNodes(&wifiAPMenu, "Live", TFTMAGENTA, 0, [this]() {
+        /*this->addNodes(&wifiAPMenu, "实时", TFTMAGENTA, 0, [this]() {
           display_obj.clearScreen();
           this->drawStatusBar();
           wifi_scan_obj.StartScan(BT_ATTACK_FINDMY_LIVE, TFT_RED);
@@ -3837,12 +3825,12 @@ void MenuFunctions::RunSetup()
 
       sdDeleteMenu.parentMenu = &deviceMenu;
 
-      this->addNodes(&deviceMenu, "Update Firmware", TFTORANGE, SD_UPDATE, [this]() {
+      this->addNodes(&deviceMenu, "更新固件", TFTORANGE, SD_UPDATE, [this]() {
         display_obj.clearScreen();
         display_obj.tft.setTextWrap(false);
         display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
         display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
-        display_obj.tft.println("Loading...");
+        display_obj.tft.println("正在载入…");
 
         // Clear menu and lists
         this->buildSDFileMenu(true);
@@ -3850,23 +3838,23 @@ void MenuFunctions::RunSetup()
         this->changeMenu(&sdDeleteMenu, true);
       });
 
-      this->addNodes(&deviceMenu, "Backup SPIFFS", TFTGREEN, SD_UPDATE, [this]() {
+      this->addNodes(&deviceMenu, "备份SPIFFS", TFTGREEN, SD_UPDATE, [this]() {
         cli_obj.runCommand(BACKUP_SPIFFS_CMD);
       });
 
-      this->addNodes(&deviceMenu, "Restore SPIFFS", TFTORANGE, SD_UPDATE, [this]() {
+      this->addNodes(&deviceMenu, "恢复SPIFFS", TFTORANGE, SD_UPDATE, [this]() {
         cli_obj.runCommand(RESTORE_SPIFFS_CMD);
       });
 
     }
   #endif
 
-  this->addNodes(&deviceMenu, "Save/Load Files", TFTCYAN, SD_UPDATE, [this]() {
+  this->addNodes(&deviceMenu, "保存/载入文件", TFTCYAN, SD_UPDATE, [this]() {
     this->changeMenu(&saveFileMenu, true);
   });
 
   #ifndef HAS_MINI_SCREEN
-    this->addNodes(&deviceMenu, "Brightness", TFTYELLOW, BRIGHTNESS, [this]() {
+    this->addNodes(&deviceMenu, "屏幕亮度", TFTYELLOW, BRIGHTNESS, [this]() {
       this->brightnessMode();
     });
   #endif
@@ -3879,7 +3867,7 @@ void MenuFunctions::RunSetup()
   this->addNodes(&deviceMenu, text08, TFTBLUE, SETTINGS, [this]() {
     this->changeMenu(&settingsMenu, true);
   });
-  this->addNodes(&deviceMenu, "Geofences", TFTGREEN, GPS_MENU, [this]() {
+  this->addNodes(&deviceMenu, "地理围栏", TFTGREEN, GPS_MENU, [this]() {
     this->buildGeofenceMenu();
   });
 
@@ -3888,12 +3876,12 @@ void MenuFunctions::RunSetup()
 
       sdDeleteMenu.parentMenu = &deviceMenu;
 
-      this->addNodes(&deviceMenu, "SD File Browser", TFTCYAN, SD_UPDATE, [this]() {
+      this->addNodes(&deviceMenu, "SD卡文件浏览", TFTCYAN, SD_UPDATE, [this]() {
         display_obj.clearScreen();
         display_obj.tft.setTextWrap(false);
         display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
         display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
-        display_obj.tft.println("Loading...");
+        display_obj.tft.println("正在载入…");
 
         // Clear menu and lists
         this->buildSDDeleteBrowser("/", true);
@@ -3908,27 +3896,27 @@ void MenuFunctions::RunSetup()
   this->addNodes(&saveFileMenu, text09, TFTLIGHTGREY, 0, [this]() {
     this->changeMenu(saveFileMenu.parentMenu, true);
   });
-  this->addNodes(&saveFileMenu, "Save SSIDs", TFTCYAN, SD_UPDATE, [this]() {
+  this->addNodes(&saveFileMenu, "保存SSID", TFTCYAN, SD_UPDATE, [this]() {
     this->changeMenu(&saveSSIDsMenu, true);
     wifi_scan_obj.RunSaveSSIDList(true);
   });
-  this->addNodes(&saveFileMenu, "Load SSIDs", TFTSKYBLUE, SD_UPDATE, [this]() {
+  this->addNodes(&saveFileMenu, "载入SSID", TFTSKYBLUE, SD_UPDATE, [this]() {
     this->changeMenu(&loadSSIDsMenu, true);
     wifi_scan_obj.RunLoadSSIDList();
   });
-  this->addNodes(&saveFileMenu, "Save APs", TFTNAVY, SD_UPDATE, [this]() {
+  this->addNodes(&saveFileMenu, "保存热点", TFTNAVY, SD_UPDATE, [this]() {
     this->changeMenu(&saveAPsMenu, true);
     wifi_scan_obj.RunSaveAPList();
   });
-  this->addNodes(&saveFileMenu, "Load APs", TFTBLUE, SD_UPDATE, [this]() {
+  this->addNodes(&saveFileMenu, "载入热点", TFTBLUE, SD_UPDATE, [this]() {
     this->changeMenu(&loadAPsMenu, true);
     wifi_scan_obj.RunLoadAPList();
   });
-  this->addNodes(&saveFileMenu, "Save Airtags", TFTWHITE, SD_UPDATE, [this]() {
+  this->addNodes(&saveFileMenu, "保存AirTag", TFTWHITE, SD_UPDATE, [this]() {
     this->changeMenu(&saveAPsMenu, true);
     wifi_scan_obj.RunSaveATList();
   });
-  this->addNodes(&saveFileMenu, "Load Airtags", TFTWHITE, SD_UPDATE, [this]() {
+  this->addNodes(&saveFileMenu, "载入AirTag", TFTWHITE, SD_UPDATE, [this]() {
     this->changeMenu(&loadAPsMenu, true);
     wifi_scan_obj.RunLoadATList();
   });
@@ -3972,25 +3960,25 @@ void MenuFunctions::RunSetup()
         this->changeMenu(gpsMenu.parentMenu, true);
       });
 
-      this->addNodes(&gpsMenu, "GPS Data", TFTRED, GPS_MENU, [this]() {
+      this->addNodes(&gpsMenu, "GPS数据", TFTRED, GPS_MENU, [this]() {
         wifi_scan_obj.currentScanMode = WIFI_SCAN_GPS_DATA;
         this->changeMenu(&gpsInfoMenu, true);
         wifi_scan_obj.StartScan(WIFI_SCAN_GPS_DATA, TFT_CYAN);
       });
 
-      this->addNodes(&gpsMenu, "NMEA Stream", TFTORANGE, GPS_MENU, [this]() {
+      this->addNodes(&gpsMenu, "NMEA数据流", TFTORANGE, GPS_MENU, [this]() {
         wifi_scan_obj.currentScanMode = WIFI_SCAN_GPS_NMEA;
         this->changeMenu(&gpsInfoMenu, true);
         wifi_scan_obj.StartScan(WIFI_SCAN_GPS_NMEA, TFT_ORANGE);
       });
 
-      this->addNodes(&gpsMenu, "GPS Tracker", TFTGREEN, GPS_MENU, [this]() {
+      this->addNodes(&gpsMenu, "GPS跟踪", TFTGREEN, GPS_MENU, [this]() {
         wifi_scan_obj.currentScanMode = GPS_TRACKER;
         this->changeMenu(&gpsInfoMenu, true);
         wifi_scan_obj.StartScan(GPS_TRACKER, TFT_CYAN);
       });
 
-      this->addNodes(&gpsMenu, "GPS POI", TFTCYAN, GPS_MENU, [this]() {
+      this->addNodes(&gpsMenu, "GPS兴趣点", TFTCYAN, GPS_MENU, [this]() {
         wifi_scan_obj.StartScan(GPS_POI, TFT_CYAN);
         wifi_scan_obj.currentScanMode = WIFI_SCAN_OFF;
         this->changeMenu(&gpsPOIMenu, true);
@@ -4003,14 +3991,14 @@ void MenuFunctions::RunSetup()
         wifi_scan_obj.StartScan(WIFI_SCAN_OFF);
         this->changeMenu(gpsPOIMenu.parentMenu, true);
       });
-      this->addNodes(&gpsPOIMenu, "Mark POI", TFTCYAN, GPS_MENU, [this]() {
+      this->addNodes(&gpsPOIMenu, "标记兴趣点", TFTCYAN, GPS_MENU, [this]() {
         wifi_scan_obj.currentScanMode = GPS_POI;
         display_obj.tft.setCursor(0, TFT_HEIGHT / 2);
         display_obj.clearScreen();
         if (wifi_scan_obj.RunGPSInfo(true, false, true))
-          display_obj.showCenterText("POI Logged", TFT_HEIGHT / 2);
+          display_obj.showCenterText("兴趣点已记录", TFT_HEIGHT / 2);
         else
-          display_obj.showCenterText("POI Log Failed", TFT_HEIGHT / 2);
+          display_obj.showCenterText("兴趣点记录失败", TFT_HEIGHT / 2);
         wifi_scan_obj.currentScanMode = WIFI_SCAN_OFF;
         delay(2000);
         this->changeMenu(&gpsPOIMenu, true);
@@ -4092,18 +4080,8 @@ void MenuFunctions::RunSetup()
 
   Serial.println("Changing to main menu...");
 
-  // 保留上游首页作为高级工具入口，CYD 默认进入中文首页。
-  #if defined(MARAUDER_CYD_2USB)
-    redguardMenu.name = "RedGuard";
-    redguardMenu.list = new LinkedList<MenuNode>();
-    this->addNodes(&redguardMenu, "Upstream tools", TFTORANGE, GENERAL_APPS, [this]() {
-      this->changeMenu(&mainMenu, true);
-    });
-    redguardMenu.parentMenu = &mainMenu;
-    this->changeMenu(&redguardMenu, true);
-  #else
-    this->changeMenu(&mainMenu, true);
-  #endif
+  // Set the current menu to the mainMenu
+  this->changeMenu(&mainMenu, true);
 
   this->initTime = millis();
 }
@@ -4169,7 +4147,7 @@ void MenuFunctions::beginMiniGeofenceEdit(uint8_t slot, bool use_current_locatio
     #ifdef HAS_GPS
       if (!gps_obj.getFixStatus()) {
         display_obj.clearScreen();
-        display_obj.showCenterText("GPS fix needed", TFT_HEIGHT / 2);
+        display_obj.showCenterText("需要GPS定位", TFT_HEIGHT / 2);
         delay(1200);
         this->buildGeofenceActionMenu(slot);
         return;
@@ -4189,7 +4167,7 @@ void MenuFunctions::beginMiniGeofenceEdit(uint8_t slot, bool use_current_locatio
         fence.latitude < -90.0 || fence.latitude > 90.0 ||
         fence.longitude < -180.0 || fence.longitude > 180.0) {
       display_obj.clearScreen();
-      display_obj.showCenterText("Invalid coordinates", TFT_HEIGHT / 2);
+      display_obj.showCenterText("坐标无效", TFT_HEIGHT / 2);
       delay(1200);
       this->buildGeofenceActionMenu(slot);
       return;
@@ -4212,7 +4190,7 @@ void MenuFunctions::buildGeofenceRadiusMenu(uint8_t slot, const GeofenceConfig& 
       const bool saved = settings_obj.saveGeofence(this->pendingGeofenceSlot, this->pendingGeofence);
       if (saved) wifi_scan_obj.reloadGeofences();
       display_obj.clearScreen();
-      display_obj.showCenterText(saved ? "Geofence saved" : "Unable to save", TFT_HEIGHT / 2);
+      display_obj.showCenterText(saved ? "地理围栏已保存" : "无法保存", TFT_HEIGHT / 2);
       delay(1200);
       this->deferGeofenceMenuRefresh();
     });
@@ -4253,25 +4231,25 @@ void MenuFunctions::buildGeofenceActionMenu(uint8_t slot) {
   geofenceActionMenu.list->clear();
   geofenceActionMenu.parentMenu = &geofenceMenu;
   this->addNodes(&geofenceActionMenu, text09, TFTLIGHTGREY, 0, [this]() { this->buildGeofenceMenu(); });
-  this->addNodes(&geofenceActionMenu, "Enter coordinates", TFTCYAN, GPS_MENU, [this, slot]() {
+  this->addNodes(&geofenceActionMenu, "输入坐标", TFTCYAN, GPS_MENU, [this, slot]() {
     #ifdef HAS_MINI_SCREEN
       this->beginMiniGeofenceEdit(slot, false);
     #else
     const bool saved = this->editGeofence(slot, false);
     display_obj.clearScreen();
-    display_obj.showCenterText(saved ? "Geofence saved" : "Invalid or cancelled", TFT_HEIGHT / 2);
+    display_obj.showCenterText(saved ? "地理围栏已保存" : "输入无效或已取消", TFT_HEIGHT / 2);
     delay(1200);
     this->buildGeofenceMenu();
     #endif
   });
   #ifdef HAS_GPS
-    this->addNodes(&geofenceActionMenu, "Use current GPS", TFTGREEN, GPS_MENU, [this, slot]() {
+    this->addNodes(&geofenceActionMenu, "使用当前GPS", TFTGREEN, GPS_MENU, [this, slot]() {
       #ifdef HAS_MINI_SCREEN
         this->beginMiniGeofenceEdit(slot, true);
       #else
       const bool saved = this->editGeofence(slot, true);
       display_obj.clearScreen();
-      display_obj.showCenterText(saved ? "Geofence saved" : "GPS fix/input needed", TFT_HEIGHT / 2);
+      display_obj.showCenterText(saved ? "地理围栏已保存" : "需要GPS定位或输入", TFT_HEIGHT / 2);
       delay(1200);
       this->buildGeofenceMenu();
       #endif
@@ -4279,7 +4257,7 @@ void MenuFunctions::buildGeofenceActionMenu(uint8_t slot) {
   #endif
   GeofenceConfig fence;
   if (settings_obj.loadGeofence(slot, fence)) {
-    this->addNodes(&geofenceActionMenu, "Clear geofence", TFTRED, CLEAR_ICO, [this, slot]() {
+    this->addNodes(&geofenceActionMenu, "清空地理围栏", TFTRED, CLEAR_ICO, [this, slot]() {
       settings_obj.clearGeofence(slot);
       wifi_scan_obj.reloadGeofences();
       #ifdef HAS_MINI_SCREEN
@@ -4370,10 +4348,10 @@ void MenuFunctions::buildGeofenceActionMenu(uint8_t slot) {
           String visible = wifi_scan_obj.current_mini_kb_ssid;
           if (visible.length() > 21) visible = visible.substring(visible.length() - 21);
           display_obj.tft.drawString(visible + "_", 0, 10, 1);
-          display_obj.tft.drawString("Char: [" + String(wifi_scan_obj.alfa.charAt(this->mini_kb_index)) + "]", 0, 22, 1);
-          display_obj.tft.drawString("L/R:char D:add", 0, 34, 1);
-          display_obj.tft.drawString("U:del A:add/hold OK", 0, 44, 1);
-          display_obj.tft.drawString("B:cancel", 0, 54, 1);
+          display_obj.tft.drawString("字符：[" + String(wifi_scan_obj.alfa.charAt(this->mini_kb_index)) + "]", 0, 22, 1);
+          display_obj.tft.drawString("左右选字，下方添加", 0, 34, 1);
+          display_obj.tft.drawString("上删下添，长按确认", 0, 44, 1);
+          display_obj.tft.drawString("B：取消", 0, 54, 1);
           // miniKeyboard() is a blocking input loop, so the normal POOM flush
           // at the end of loop() cannot run while this editor is open.
           display_obj.tft.display(true);
@@ -4743,32 +4721,32 @@ void MenuFunctions::buildGeofenceActionMenu(uint8_t slot) {
             display_obj.tft.setTextColor(TFT_ORANGE, TFT_BLACK);
             #ifdef HAS_MINI_KB
               #if !defined(MARAUDER_CARDPUTER) && !defined(MARAUDER_CARDPUTER_ADV)
-              display_obj.tft.println("U/D - Rem/Add Char");
-              display_obj.tft.println("L/R - Prev/Nxt Char");
+              display_obj.tft.println("上删下添字符");
+              display_obj.tft.println("左右：切换字符");
               #endif
               if (!do_pass) {
                 #if defined(MARAUDER_CARDPUTER) || defined(MARAUDER_CARDPUTER_ADV)
-                  display_obj.tft.println("Enter - Save");
-                  display_obj.tft.println("Esc - Exit");
+                  display_obj.tft.println("回车：保存");
+                  display_obj.tft.println("Esc：退出");
                 #else
-                  display_obj.tft.println("C - Save");
-                  display_obj.tft.println("C(Hold) - Exit");
+                  display_obj.tft.println("C：保存");
+                  display_obj.tft.println("长按C：退出");
                 #endif
               }
               else {
                 #if defined(MARAUDER_CARDPUTER) || defined(MARAUDER_CARDPUTER_ADV)
-                  display_obj.tft.println("Enter - Enter");
+                  display_obj.tft.println("回车：确认");
                 #else
-                  display_obj.tft.println("C(Hold) - Enter");
+                  display_obj.tft.println("长按C：确认");
                 #endif
               }
             #endif
 
             #ifdef HAS_TOUCH
-              display_obj.tft.println("U/D - Prev/Nxt Char");
-              display_obj.tft.println("C - Add Char");
-              display_obj.tft.println("C(Hold) - Rem Char");
-              display_obj.tft.println("U(Hold) - Enter");
+              display_obj.tft.println("上下：切换字符");
+              display_obj.tft.println("C：添加字符");
+              display_obj.tft.println("长按C：删除字符");
+              display_obj.tft.println("长按上方：确认");
             #endif
             pressed = false;
           }
@@ -4841,7 +4819,7 @@ void MenuFunctions::buildSDFileMenu(bool update) {
 
   resetOwnedList(sdDeleteMenu.list);
 
-  sdDeleteMenu.name = "Bin Files";
+  sdDeleteMenu.name = "BIN文件";
 
   this->addNodes(&sdDeleteMenu, text09, TFTLIGHTGREY, 0, [this]() {
     this->changeMenu(sdDeleteMenu.parentMenu, true);
@@ -4942,7 +4920,7 @@ void MenuFunctions::buildSDDeleteBrowser(const String& path, bool reset_selectio
   });
 
   if (path == "/") {
-    this->addNodes(&sdDeleteMenu, "Delete Selected", TFTRED, 0, [this]() {
+    this->addNodes(&sdDeleteMenu, "删除所选", TFTRED, 0, [this]() {
       display_obj.clearScreen();
       display_obj.tft.setTextWrap(false);
       display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
@@ -4960,13 +4938,13 @@ void MenuFunctions::buildSDDeleteBrowser(const String& path, bool reset_selectio
         }
       }
       sd_delete_selection->clear();
-      display_obj.tft.println("Deleted " + String(deleted) + " file(s)");
+      display_obj.tft.println("已删除 " + String(deleted) + " 个文件");
       delay(1000);
       this->buildSDDeleteBrowser("/");
       this->changeMenu(&sdDeleteMenu, true);
     });
 
-    this->addNodes(&sdDeleteMenu, "Deselect All", TFTYELLOW, 0, [this]() {
+    this->addNodes(&sdDeleteMenu, "取消全选", TFTYELLOW, 0, [this]() {
       sd_delete_selection->clear();
       for (int index = 0; index < current_menu->list->size(); index++) {
         MenuNode node = current_menu->list->get(index);
@@ -5201,19 +5179,19 @@ void MenuFunctions::renderGraphUI(uint8_t scan_mode) {
     return;
   #endif
   if (scan_mode == WIFI_SCAN_CHAN_ANALYZER)
-    display_obj.tft.drawCentreString("Frames/" + (String)BANNER_TIME + "ms", SCREEN_WIDTH / 2, SCREEN_HEIGHT - GRAPH_VERT_LIM - (CHAR_WIDTH * 2), 1);
+    display_obj.tft.drawCentreString("帧数/" + (String)BANNER_TIME + "ms", SCREEN_WIDTH / 2, SCREEN_HEIGHT - GRAPH_VERT_LIM - (CHAR_WIDTH * 2), 1);
   else if (scan_mode == BT_SCAN_ANALYZER)
-    display_obj.tft.drawCentreString("BLE Beacons/" + (String)BANNER_TIME + "ms", SCREEN_WIDTH / 2, SCREEN_HEIGHT - GRAPH_VERT_LIM - (CHAR_WIDTH * 2), 1);
+    display_obj.tft.drawCentreString("BLE信标/" + (String)BANNER_TIME + "ms", SCREEN_WIDTH / 2, SCREEN_HEIGHT - GRAPH_VERT_LIM - (CHAR_WIDTH * 2), 1);
   display_obj.tft.drawLine(0, SCREEN_HEIGHT - GRAPH_VERT_LIM - 1, SCREEN_WIDTH, SCREEN_HEIGHT - GRAPH_VERT_LIM - 1, TFT_WHITE);
   display_obj.tft.setCursor(0, SCREEN_HEIGHT - GRAPH_VERT_LIM - (CHAR_WIDTH * 8));
   display_obj.tft.setTextSize(1);
   display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  display_obj.tft.println("Max");
+  display_obj.tft.println("最大值");
   display_obj.tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  display_obj.tft.println("Average");
+  display_obj.tft.println("平均值");
   display_obj.tft.setTextColor(TFT_RED, TFT_BLACK);
   if (scan_mode != BT_SCAN_ANALYZER)
-    display_obj.tft.println("Channel Marker");
+    display_obj.tft.println("信道标记");
 }
 
 uint16_t MenuFunctions::getColor(uint16_t color) {
@@ -5240,9 +5218,6 @@ uint16_t MenuFunctions::getColor(uint16_t color) {
 
 // Function to change menu
 void MenuFunctions::changeMenu(Menu* menu, bool simple_change) {
-  #if defined(MARAUDER_CYD_2USB)
-    if (menu != &redguardMenu) redguardUi.stopScan();
-  #endif
   #ifdef HAS_SD
     const bool leaving_sd_browser = current_menu == &sdDeleteMenu && menu != &sdDeleteMenu;
   #endif
@@ -5265,14 +5240,6 @@ void MenuFunctions::changeMenu(Menu* menu, bool simple_change) {
   marquee_rendered_offset = 0;
   marquee_max_offset = 0;
 
-  #if defined(MARAUDER_CYD_2USB)
-    if (menu == &redguardMenu) {
-      // 由原版方法建立三区域触控按钮，保证坐标、边界与操作完全一致。
-      buildButtons(&mainMenu);
-      redguardUi.show();
-      return;
-    }
-  #endif
   buildButtons(menu);
 
   displayCurrentMenu();
@@ -5352,9 +5319,6 @@ void MenuFunctions::buildButtons(Menu *menu, int starting_index, const char* but
 
 void MenuFunctions::displayCurrentMenu(int start_index)
 {
-  #if defined(MARAUDER_CYD_2USB)
-    if (current_menu == &redguardMenu) { redguardUi.draw(); return; }
-  #endif
   //Serial.println(F("Displaying current menu..."));
   marquee_menu = nullptr;
   marquee_selected = 0xFFFF;
@@ -5454,13 +5418,13 @@ void MenuFunctions::displayCurrentMenu(int start_index)
 
     display_obj.tft.fillScreen(TFT_BLACK);
     display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
-    display_obj.tft.drawCentreString("BRIGHTNESS", TFT_WIDTH/2, 30, 2);
+    display_obj.tft.drawCentreString("屏幕亮度", TFT_WIDTH/2, 30, 2);
 
     display_obj.tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-    display_obj.tft.drawCentreString("TAP TOP = BRIGHTER", TFT_WIDTH/2, 10, 1);
-    display_obj.tft.drawCentreString("TAP BOTTOM = DIMMER", TFT_WIDTH/2, TFT_HEIGHT - 20, 1);
+    display_obj.tft.drawCentreString("上方触摸：调亮", TFT_WIDTH/2, 10, 1);
+    display_obj.tft.drawCentreString("下方触摸：调暗", TFT_WIDTH/2, TFT_HEIGHT - 20, 1);
     display_obj.tft.setTextColor(TFT_RED, TFT_BLACK);
-    display_obj.tft.drawCentreString("TAP MIDDLE or WAIT 3s = SAVE", TFT_WIDTH/2, TFT_HEIGHT/2 + 50, 1);
+    display_obj.tft.drawCentreString("中间触摸或等三秒保存", TFT_WIDTH/2, TFT_HEIGHT/2 + 50, 1);
 
     auto drawBar = [&]() {
       uint16_t barX = 30, barY = TFT_HEIGHT/2 - 25, barW = TFT_WIDTH - 60, barH = 30;

@@ -24,7 +24,6 @@
 #include "SDInterface.h"
 #include "settings.h"
 #include "MenuInputRepeat.h"
-#include "RedGuardUi.h"
 
 #ifdef HAS_BUTTONS
   #include "Switches.h"
@@ -186,10 +185,6 @@ class MenuFunctions
 
     // Main menu stuff
     Menu mainMenu;
-    #if defined(MARAUDER_CYD_2USB)
-      Menu redguardMenu;
-      RedGuard::Ui redguardUi;
-    #endif
     Menu reconMenu;
 
     Menu wifiMenu;
@@ -339,9 +334,6 @@ class MenuFunctions
     #endif
 
   public:
-    #if defined(MARAUDER_CYD_2USB)
-      void stopRedguardScan() { redguardUi.stopScan(); }
-    #endif
     Menu* current_menu;
     Menu clearSSIDsMenu;
     Menu clearAPsMenu;

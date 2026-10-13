@@ -9,7 +9,7 @@ esp32_marauder/.vscode/settings.json
 __pycache__/
 *.pyc
 
-# RedGuard local toolchains and generated firmware
+# Local toolchains and generated build files
 .redguard-build/
 build/
 *.elf
@@ -19,3 +19,6 @@ build/
 .redguard-local/
 *.sqlite3
 *.sqlite3-*
+
+.marauder-zh-build/
+esp32_marauder/PreviousVersions/

@@ -261,10 +261,6 @@ void CommandLine::startScanFromCLI(int scan_mode, uint16_t color, const char* sc
 }
 
 void CommandLine::runCommand(String input) {
-  #if defined(MARAUDER_CYD_2USB)
-    // 串口命令优先；先释放中文被动扫描的驱动，避免与原版模式争用。
-    menu_function_obj.stopRedguardScan();
-  #endif
   if (input == "") return;
 
   if(wifi_scan_obj.scanning() && wifi_scan_obj.currentScanMode == WIFI_SCAN_GPS_NMEA){
@@ -1564,12 +1560,12 @@ void CommandLine::runCommand(String input) {
           #endif
           if (wifi_scan_obj.RunGPSInfo(true, false, true)) {
             #ifdef HAS_SCREEN
-              display_obj.showCenterText("POI Logged", TFT_HEIGHT / 2);
+              display_obj.showCenterText("兴趣点已记录", TFT_HEIGHT / 2);
             #endif
           }
           else {
             #ifdef HAS_SCREEN
-              display_obj.showCenterText("POI Log Failed", TFT_HEIGHT / 2);
+              display_obj.showCenterText("兴趣点记录失败", TFT_HEIGHT / 2);
             #endif
           }
           wifi_scan_obj.currentScanMode = WIFI_SCAN_OFF;

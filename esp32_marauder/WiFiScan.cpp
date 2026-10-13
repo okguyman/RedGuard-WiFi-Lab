@@ -2335,15 +2335,15 @@ void WiFiScan::showNetworkInfo(bool show_display) { // GCOVR_EXCL_LINE -- host t
   #ifdef HAS_SCREEN
   if (show_display) { // GCOVR_EXCL_LINE
     display_obj.tft.println("\nConnected!");
-    display_obj.tft.print("IP address: ");
+    display_obj.tft.print("IP地址：");
     display_obj.tft.println(this->ip_addr);
-    display_obj.tft.print("Gateway: ");
+    display_obj.tft.print("网关：");
     display_obj.tft.println(this->gateway);
-    display_obj.tft.print("Netmask: ");
+    display_obj.tft.print("子网掩码：");
     display_obj.tft.println(this->subnet);
     display_obj.tft.print("MAC: ");
     display_obj.tft.println(WiFi.macAddress());
-    display_obj.tft.println("Returning...");
+    display_obj.tft.println("正在返回…");
     delay(2000);
   } // GCOVR_EXCL_LINE
   #endif
@@ -2421,7 +2421,7 @@ bool WiFiScan::joinWiFi(String ssid, String password, bool gui, bool save_creden
       display_obj.clearScreen();
       display_obj.tft.setCursor(0, TFT_HEIGHT / 2);
       display_obj.tft.setTextSize(1);
-      display_obj.tft.print("Connecting");
+      display_obj.tft.print("正在连接");
       display_obj.tft.setTextWrap(true, false);
       #ifdef MARAUDER_POOM
         display_obj.tft.display(true);
@@ -2495,7 +2495,7 @@ bool WiFiScan::joinSavedWiFi(bool gui) {
       if (gui) {
         display_obj.clearScreen();
         display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
-        display_obj.tft.drawCentreString("No saved WiFi", SCREEN_WIDTH / 2, 22, 1);
+        display_obj.tft.drawCentreString("没有已保存的Wi-Fi", SCREEN_WIDTH / 2, 22, 1);
         display_obj.tft.display(true);
         delay(1000);
       }
@@ -2510,7 +2510,7 @@ bool WiFiScan::joinSavedWiFi(bool gui) {
       display_obj.tft.setTextSize(1);
       display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
       display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
-      display_obj.tft.println(F("Scanning for saved WiFi..."));
+      display_obj.tft.println(F("正在扫描已保存的Wi-Fi…"));
       #ifdef MARAUDER_POOM
         display_obj.tft.display(true);
       #endif
@@ -2589,7 +2589,7 @@ bool WiFiScan::joinSavedWiFi(bool gui) {
           display_obj.clearScreen();
           display_obj.tft.setCursor(0, SCREEN_HEIGHT / 3);
           display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
-          display_obj.tft.println(F("Connected:"));
+          display_obj.tft.println(F("已连接："));
           display_obj.tft.println(ssid);
           #ifdef MARAUDER_POOM
             display_obj.tft.display(true);
@@ -2628,7 +2628,7 @@ bool WiFiScan::joinSavedWiFi(bool gui) {
       display_obj.tft.setTextWrap(false);
       display_obj.tft.setTextSize(1);
       display_obj.tft.setTextColor(TFT_RED, TFT_BLACK);
-      display_obj.tft.drawCentreString("Saved WiFi failed", SCREEN_WIDTH / 2, 22, 1);
+      display_obj.tft.drawCentreString("已保存的Wi-Fi连接失败", SCREEN_WIDTH / 2, 22, 1);
       #ifdef MARAUDER_POOM
         display_obj.tft.display(true);
       #endif
@@ -2695,7 +2695,7 @@ bool WiFiScan::startWiFi(String ssid, String password, bool gui) {
       display_obj.clearScreen();
       display_obj.tft.setCursor(0, TFT_HEIGHT / 2);
       display_obj.tft.setTextSize(1);
-      display_obj.tft.print("Starting");
+      display_obj.tft.print("正在启动");
       display_obj.tft.setTextWrap(true, false);
     }
   #endif
@@ -2968,7 +2968,7 @@ void WiFiScan::displayTargetFilter() {
     if (this->filterActive()) {
       display_obj.tft.setTextColor(TFT_RED, TFT_BLACK);
       display_obj.tft.setTextSize(1);
-      display_obj.showCenterText("Transmitting...", (STATUS_BAR_WIDTH * 3) + 1, true);
+      display_obj.showCenterText("正在发送…", (STATUS_BAR_WIDTH * 3) + 1, true);
       display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
       #ifdef HAS_MINI_SCREEN
         display_obj.tft.setTextSize(1);
@@ -2976,7 +2976,7 @@ void WiFiScan::displayTargetFilter() {
         display_obj.tft.setTextSize(2);
       #endif
 
-      display_obj.showCenterText("Targeted Networks", (STATUS_BAR_WIDTH * 3) + (CHAR_WIDTH) + 1);
+      display_obj.showCenterText("目标网络", (STATUS_BAR_WIDTH * 3) + (CHAR_WIDTH) + 1);
       display_obj.tft.setTextSize(1);
       display_obj.tft.println();
       display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -2995,7 +2995,7 @@ void WiFiScan::displayTargetFilter() {
         display_obj.tft.setTextSize(2);
       #endif
 
-      display_obj.showCenterText("No Networks Selected", (STATUS_BAR_WIDTH * 3) + (CHAR_WIDTH));
+      display_obj.showCenterText("未选择网络", (STATUS_BAR_WIDTH * 3) + (CHAR_WIDTH));
     }
   #endif
 }
@@ -3841,9 +3841,9 @@ void WiFiScan::RunPingScan(uint8_t scan_mode, uint16_t color) {
     #ifdef HAS_FULL_SCREEN
       display_obj.tft.fillRect(0,16,TFT_WIDTH,16, color);
       if (scan_mode == WIFI_PING_SCAN)
-        display_obj.tft.drawCentreString("Ping Scan",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("Ping扫描",TFT_WIDTH / 2,16,2);
       else if (scan_mode == WIFI_ARP_SCAN)
-        display_obj.tft.drawCentreString("ARP Scan",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("ARP扫描",TFT_WIDTH / 2,16,2);
     #endif
     this->prepareScanStage(TFT_RED, TFT_BLACK);
   #endif
@@ -3907,21 +3907,21 @@ void WiFiScan::RunPortScanAll(uint8_t scan_mode, uint16_t color) {
     #ifdef HAS_FULL_SCREEN
       display_obj.tft.fillRect(0,16,TFT_WIDTH,16, color);
       if (scan_mode == WIFI_PORT_SCAN_ALL)
-        display_obj.tft.drawCentreString("Port Scan All",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("全端口扫描",TFT_WIDTH / 2,16,2);
       else if (scan_mode == WIFI_SCAN_SSH)
-        display_obj.tft.drawCentreString("SSH Scan",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("SSH扫描",TFT_WIDTH / 2,16,2);
       else if (scan_mode == WIFI_SCAN_TELNET)
-        display_obj.tft.drawCentreString("Telnet Scan",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("Telnet扫描",TFT_WIDTH / 2,16,2);
       else if (scan_mode == WIFI_SCAN_SMTP)
-        display_obj.tft.drawCentreString("SMTP Scan",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("SMTP扫描",TFT_WIDTH / 2,16,2);
       else if (scan_mode == WIFI_SCAN_DNS)
-        display_obj.tft.drawCentreString("DNS Scan",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("DNS扫描",TFT_WIDTH / 2,16,2);
       else if (scan_mode == WIFI_SCAN_HTTP)
-        display_obj.tft.drawCentreString("HTTP Scan",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("HTTP扫描",TFT_WIDTH / 2,16,2);
       else if (scan_mode == WIFI_SCAN_HTTPS)
-        display_obj.tft.drawCentreString("HTTPS Scan",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("HTTPS扫描",TFT_WIDTH / 2,16,2);
       else if (scan_mode == WIFI_SCAN_RDP)
-        display_obj.tft.drawCentreString("RDP Scan",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("RDP扫描",TFT_WIDTH / 2,16,2);
     #endif
     this->prepareScanStage(TFT_RED, TFT_BLACK);
   #endif
@@ -4027,7 +4027,7 @@ void WiFiScan::RunLoadATList() {
       display_obj.tft.setTextSize(1);
       display_obj.tft.setTextColor(TFT_CYAN);
     
-      display_obj.tft.print(F("Loaded Airtags: "));
+      display_obj.tft.print(F("已加载Airtag："));
       display_obj.tft.println((String)airtags->size());
     #endif
     Serial.print(F("Loaded Airtags:"));
@@ -4066,7 +4066,7 @@ void WiFiScan::RunSaveATList(bool save_as) {
         display_obj.tft.setTextSize(1);
         display_obj.tft.setTextColor(TFT_CYAN);
       
-        display_obj.tft.print(F("Saved Airtags: "));
+        display_obj.tft.print(F("已保存Airtag："));
         display_obj.tft.println((String)airtags->size());
       #endif
       Serial.print(F("Saved Airtags:"));
@@ -4171,7 +4171,7 @@ void WiFiScan::RunLoadAPList() {
       display_obj.tft.setCursor(0, 100);
       display_obj.tft.setTextSize(1);
       display_obj.tft.setTextColor(TFT_CYAN);
-      display_obj.tft.print(F("Loaded APs: "));
+      display_obj.tft.print(F("已加载接入点："));
       display_obj.tft.println((String)access_points->size());
     #endif
     Serial.print(F("Loaded APs:"));
@@ -4224,7 +4224,7 @@ void WiFiScan::RunSaveAPList(bool save_as) {
         display_obj.tft.setTextSize(1);
         display_obj.tft.setTextColor(TFT_CYAN);
       
-        display_obj.tft.print(F("Saved APs: "));
+        display_obj.tft.print(F("已保存接入点："));
         display_obj.tft.println((String)access_points->size());
       #endif
       Serial.print(F("Saved APs:"));
@@ -4261,7 +4261,7 @@ void WiFiScan::RunLoadSSIDList() {
       display_obj.tft.setTextSize(1);
       display_obj.tft.setTextColor(TFT_CYAN);
     
-      display_obj.tft.print(F("Loaded SSIDs: "));
+      display_obj.tft.print(F("已加载SSID："));
       display_obj.tft.println((String)ssids->size());
     #endif
 
@@ -4295,7 +4295,7 @@ void WiFiScan::RunSaveSSIDList(bool save_as) {
         display_obj.tft.setTextSize(1);
         display_obj.tft.setTextColor(TFT_CYAN);
       
-        display_obj.tft.print(F("Saved SSIDs: "));
+        display_obj.tft.print(F("已保存SSID："));
         display_obj.tft.println((String)ssids->size());
       #endif
       Serial.print(F("Saved SSIDs: "));
@@ -4346,7 +4346,7 @@ void WiFiScan::RunAPScan(uint8_t scan_mode, uint16_t color) {
       if (scan_mode != WIFI_SCAN_AP_STA)
         display_obj.tft.drawCentreString(text_table4[44],TFT_WIDTH / 2,16,2);
       else
-        display_obj.tft.drawCentreString("Scan AP/STA",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("扫描热点/终端",TFT_WIDTH / 2,16,2);
     #endif
     this->prepareScanStage(TFT_GREEN, TFT_BLACK);
   #endif
@@ -4583,7 +4583,7 @@ bool WiFiScan::RunGPSInfo(bool tracker, bool display, bool poi) {
           if (compact) {
             display_obj.tft.setCursor(0, content_top + 6);
             display_obj.tft.setTextColor(gps_obj.getFixStatus() ? TFT_GREEN : TFT_RED);
-            display_obj.tft.print(gps_obj.getFixStatus() ? F("FIX") : F("NO FIX"));
+            display_obj.tft.print(gps_obj.getFixStatus() ? F("FIX") : F("未定位"));
             display_obj.tft.setTextColor(TFT_CYAN);
             display_obj.tft.println("  SAT " + gps_obj.getNumSatsString() + "  " + elapsed_text);
             display_obj.tft.println("DIST " + distance_text);
@@ -4600,7 +4600,7 @@ bool WiFiScan::RunGPSInfo(bool tracker, bool display, bool poi) {
             display_obj.tft.setCursor(8, y);
             display_obj.tft.setTextColor(gps_obj.getFixStatus() ? TFT_GREEN : TFT_RED);
             display_obj.tft.setTextSize(expanded ? 2 : 1);
-            display_obj.tft.print(gps_obj.getFixStatus() ? F("GPS FIX") : F("NO GPS FIX"));
+            display_obj.tft.print(gps_obj.getFixStatus() ? F("GPS已定位") : F("GPS未定位"));
             display_obj.tft.setTextColor(TFT_CYAN);
             display_obj.tft.setTextSize(1);
             display_obj.tft.setCursor(SCREEN_WIDTH - 72, y + 3);
@@ -4632,7 +4632,7 @@ bool WiFiScan::RunGPSInfo(bool tracker, bool display, bool poi) {
               display_obj.tft.println("UTC " + gps_obj.getDatetime());
               display_obj.tft.setCursor(8, y + 88);
               display_obj.tft.setTextColor(TFT_GREEN);
-              display_obj.tft.println(F("GPX LOGGING ACTIVE"));
+              display_obj.tft.println(F("GPX记录已启用"));
             }
           }
         }
@@ -4860,7 +4860,7 @@ void WiFiScan::RunAPInfo(uint16_t index, bool do_display) {
       display_obj.tft.println(" Channel: " + (String)access_point.channel);
       display_obj.tft.println("    RSSI: " + (String)access_point.rssi);
       display_obj.tft.println("  Frames: " + (String)access_point.packets);
-      display_obj.tft.println("Stations: " + (String)access_point.stations->size());
+      display_obj.tft.println("终端：" + (String)access_point.stations->size());
       display_obj.tft.println("   Brand: " + (String)access_point.man);
       display_obj.tft.print(F("Complete EAPOL: "));
       if (this->getCompleteEapol(index) > 0)
@@ -4868,9 +4868,9 @@ void WiFiScan::RunAPInfo(uint16_t index, bool do_display) {
       else
         display_obj.tft.println(F("FALSE"));
 
-      display_obj.tft.print("Security: ");
+      display_obj.tft.print("加密方式：");
       switch (sec) {
-        case WIFI_SECURITY_OPEN:             display_obj.tft.println(F("Open")); break;
+        case WIFI_SECURITY_OPEN:             display_obj.tft.println(F("开放")); break;
         case WIFI_SECURITY_WEP:              display_obj.tft.println(F("WEP")); break;
         case WIFI_SECURITY_WPA:              display_obj.tft.println(F("WPA")); break;
         case WIFI_SECURITY_WPA2:             display_obj.tft.println(F("WPA2")); break;
@@ -4879,7 +4879,7 @@ void WiFiScan::RunAPInfo(uint16_t index, bool do_display) {
         case WIFI_SECURITY_WPA2_ENTERPRISE:  display_obj.tft.println(F("WPA2 Enterprise")); break;
         case WIFI_SECURITY_WPA3_ENTERPRISE:  display_obj.tft.println(F("WPA3 Enterprise")); break;
         case WIFI_SECURITY_WAPI:             display_obj.tft.println(F("WAPI")); break;
-        default:                             display_obj.tft.println(F("Unknown")); break;
+        default:                             display_obj.tft.println(F("未知")); break;
       }
     }
   #endif
@@ -4902,8 +4902,8 @@ void WiFiScan::RunInfo() {
     display_obj.tft.setTextColor(TFT_CYAN);
     display_obj.tft.println(text_table4[20]);
     display_obj.tft.println(text_table4[21] + display_obj.version_number);
-    display_obj.tft.println("Hardware: " + (String)HARDWARE_NAME);
-    display_obj.tft.println("App partition: " + app_partition);
+    display_obj.tft.println("硬件：" + (String)HARDWARE_NAME);
+    display_obj.tft.println("应用分区：" + app_partition);
     display_obj.tft.println(text_table4[22] + (String)esp_get_idf_version());
   #endif
 
@@ -5056,15 +5056,15 @@ void WiFiScan::RunPacketMonitor(uint8_t scan_mode, uint16_t color) {
           display_obj.tft.drawCentreString(text_table1[45],TFT_WIDTH / 2,16,2);
         else if (scan_mode == WIFI_SCAN_CHAN_ANALYZER) {
           display_obj.tft.setTextColor(TFT_BLACK, color);
-          display_obj.tft.drawCentreString("Channel Analyzer", TFT_WIDTH / 2, 16, 2);
+          display_obj.tft.drawCentreString("信道分析", TFT_WIDTH / 2, 16, 2);
         }
         else if (scan_mode == WIFI_SCAN_CHAN_ACT) {
           display_obj.tft.setTextColor(TFT_BLACK, color);
-          display_obj.tft.drawCentreString("Channel Summary", TFT_WIDTH / 2, 16, 2);
+          display_obj.tft.drawCentreString("信道概览", TFT_WIDTH / 2, 16, 2);
           this->drawChannelLine();
         }
         else if (scan_mode == WIFI_SCAN_PACKET_RATE) {
-          display_obj.tft.drawCentreString("Packet Rate", TFT_WIDTH / 2, 16, 2);
+          display_obj.tft.drawCentreString("数据包速率", TFT_WIDTH / 2, 16, 2);
         }
       #endif
 
@@ -5084,13 +5084,13 @@ void WiFiScan::RunPacketMonitor(uint8_t scan_mode, uint16_t color) {
         if (scan_mode == WIFI_PACKET_MONITOR)
           display_obj.tft.drawCentreString(text_table1[45],TFT_WIDTH / 2,16,2);
         else if (scan_mode == WIFI_SCAN_CHAN_ANALYZER)
-          display_obj.tft.drawCentreString("Channel Analyzer", TFT_WIDTH / 2, 16, 2);
+          display_obj.tft.drawCentreString("信道分析", TFT_WIDTH / 2, 16, 2);
         else if (scan_mode == WIFI_SCAN_CHAN_ACT) {
-          display_obj.tft.drawCentreString("Channel Summary", TFT_WIDTH / 2, 16, 2);
+          display_obj.tft.drawCentreString("信道概览", TFT_WIDTH / 2, 16, 2);
           this->drawChannelLine();
         }
         else if (scan_mode == WIFI_SCAN_PACKET_RATE)
-          display_obj.tft.drawCentreString("Packet Rate", TFT_WIDTH / 2, 16, 2);
+          display_obj.tft.drawCentreString("数据包速率", TFT_WIDTH / 2, 16, 2);
       #else
         if (scan_mode == WIFI_SCAN_CHAN_ACT) {
           this->drawChannelLine();
@@ -5699,7 +5699,7 @@ bool WiFiScan::backendFindMySound(NimBLEAddress& address, bool gui) {
     #ifdef HAS_SCREEN
     if (gui) {
       display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
-      display_obj.tft.println("Connected");
+      display_obj.tft.println("已连接");
       display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
     }
     #endif
@@ -5714,7 +5714,7 @@ bool WiFiScan::backendFindMySound(NimBLEAddress& address, bool gui) {
         #ifdef HAS_SCREEN
         if (gui) {
           display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
-          display_obj.tft.println("Command sent");
+          display_obj.tft.println("命令已发送");
           display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
         }
         #endif
@@ -5738,7 +5738,7 @@ bool WiFiScan::backendFindMySound(NimBLEAddress& address, bool gui) {
         #ifdef HAS_SCREEN
         if (gui) {
           display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
-          display_obj.tft.println("Command sent");
+          display_obj.tft.println("命令已发送");
           display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
         }
         #endif
@@ -5762,7 +5762,7 @@ bool WiFiScan::backendFindMySound(NimBLEAddress& address, bool gui) {
         #ifdef HAS_SCREEN
         if (gui) {
           display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
-          display_obj.tft.println("Command sent");
+          display_obj.tft.println("命令已发送");
           display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
         }
         #endif
@@ -5796,7 +5796,7 @@ bool WiFiScan::backendFindMySound(NimBLEAddress& address, bool gui) {
     #ifdef HAS_SCREEN
     if (gui) {
       display_obj.tft.setTextColor(TFT_RED, TFT_BLACK);
-      display_obj.tft.println("Failed to connect");
+      display_obj.tft.println("连接失败");
       display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
     }
     #endif
@@ -5817,7 +5817,7 @@ bool WiFiScan::executeFindMySound(bool gui) {
     display_obj.clearScreen();
     display_obj.tft.setCursor(0, (TFT_HEIGHT / 4));
     display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    display_obj.tft.println("Sending sound command...\n");
+    display_obj.tft.println("正在发送声音命令…\\n");
   }
   #endif
 
@@ -5828,7 +5828,7 @@ bool WiFiScan::executeFindMySound(bool gui) {
     if (airtag.selected) {
       #ifdef HAS_SCREEN
       if (gui)
-        display_obj.tft.println("Targeting " + airtag.mac);
+        display_obj.tft.println("目标：" + airtag.mac);
       #endif
 
       selected = true;
@@ -6474,7 +6474,7 @@ void WiFiScan::renderWardriveGeofenceState() {
     this->setupScanDisplayArea(TFT_WHITE, TFT_GREEN);
     #ifdef HAS_FULL_SCREEN
       display_obj.tft.fillRect(0, 16, TFT_WIDTH, 16, TFT_GREEN);
-      display_obj.tft.drawCentreString("Wardrive", TFT_WIDTH / 2, 16, 2);
+      display_obj.tft.drawCentreString("无线巡测", TFT_WIDTH / 2, 16, 2);
     #endif
     display_obj.tft.setFreeFont(NULL);
     display_obj.tft.setTextSize(1);
@@ -6683,7 +6683,7 @@ void WiFiScan::displayAPStats() {
     }
 
     display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
-    display_obj.tft.print("Clients: ");
+    display_obj.tft.print("客户端：");
     display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
     display_obj.tft.println((String)num_clients);
 
@@ -6692,7 +6692,7 @@ void WiFiScan::displayAPStats() {
     esp_err_t err = esp_wifi_get_channel(&primaryChannel, &secondChannel);
 
     display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
-    display_obj.tft.print("Channel: ");
+    display_obj.tft.print("信道：");
     display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
     display_obj.tft.println((String)primaryChannel);
   #endif
@@ -6747,8 +6747,8 @@ void WiFiScan::displayWardriveStats() {
       display_obj.tft.setTextSize(1);
 
       #ifdef HAS_SD
-        display_obj.tft.println("File: " + buffer_obj.getFileName());
-        display_obj.tft.println("Size: " + (String)((float)sd_obj.getFile(buffer_obj.getFileName()).size() / 1024) + "KB");
+        display_obj.tft.println("文件：" + buffer_obj.getFileName());
+        display_obj.tft.println("大小：" + (String)((float)sd_obj.getFile(buffer_obj.getFileName()).size() / 1024) + "KB");
       #endif
 
       // POI button — full width bottom bar
@@ -6797,7 +6797,7 @@ void WiFiScan::RunBeaconScan(uint8_t scan_mode, uint16_t color) {
       else if (scan_mode == WIFI_SCAN_WAR_DRIVE) {
         for (int i = 0; i < mac_history_len; ++i)
           memset(mac_history[i].bytes, 0, sizeof(mac_history[i].bytes));
-        display_obj.tft.drawCentreString("Wardrive", TFT_WIDTH / 2, 16, 2);
+        display_obj.tft.drawCentreString("无线巡测", TFT_WIDTH / 2, 16, 2);
       }
       #ifdef HAS_ILI9341
         if (scan_mode != WIFI_SCAN_AP)
@@ -6849,7 +6849,7 @@ void WiFiScan::RunRawScan(uint8_t scan_mode, uint16_t color) {
       }
       else {
         display_obj.tft.setTextColor(TFT_BLACK, color);
-        display_obj.tft.drawCentreString("Fox Hunt", TFT_WIDTH / 2, 16, 2);
+        display_obj.tft.drawCentreString("信号寻向", TFT_WIDTH / 2, 16, 2);
       }
     #endif
     display_obj.tft.setTextColor(TFT_GREEN, TFT_BLACK);
@@ -6923,7 +6923,7 @@ void WiFiScan::RunSAEScan(uint8_t scan_mode, uint16_t color) {
     this->setupScanDisplayArea(TFT_BLACK, color);
     #ifdef HAS_FULL_SCREEN
       display_obj.tft.fillRect(0,16,TFT_WIDTH,16, color);
-      display_obj.tft.drawCentreString(F("SAE Commit"),TFT_WIDTH / 2,16,2);
+      display_obj.tft.drawCentreString(F("SAE提交"),TFT_WIDTH / 2,16,2);
     #endif
     this->prepareScanStage(TFT_GREEN, TFT_BLACK);
   #endif
@@ -7012,9 +7012,9 @@ void WiFiScan::RunProbeScan(uint8_t scan_mode, uint16_t color) {
       if (scan_mode == WIFI_SCAN_PROBE)
         display_obj.tft.drawCentreString(text_table4[40],TFT_WIDTH / 2,16,2);
       else if (scan_mode == WIFI_SCAN_DETECT_FOLLOW) 
-        display_obj.tft.drawCentreString("MAC Monitor",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("MAC监视",TFT_WIDTH / 2,16,2);
       else {
-        display_obj.tft.drawCentreString("Flock Sniff",TFT_WIDTH / 2,16,2);
+        display_obj.tft.drawCentreString("Flock侦听",TFT_WIDTH / 2,16,2);
       }
     #endif
     #ifdef HAS_ILI9341
@@ -7082,7 +7082,7 @@ void WiFiScan::RunSourApple(uint8_t scan_mode, uint16_t color) {
       #ifdef HAS_FULL_SCREEN
         display_obj.tft.fillRect(0,16,TFT_WIDTH,16, color);
         if (scan_mode == BT_ATTACK_SOUR_APPLE)display_obj.tft.drawCentreString("Sour Apple",TFT_WIDTH / 2,16,2);
-        else if (scan_mode == BT_ATTACK_APPLE_JUICE) display_obj.tft.drawCentreString("Apple Juice",TFT_WIDTH / 2,16,2);
+        else if (scan_mode == BT_ATTACK_APPLE_JUICE) display_obj.tft.drawCentreString("AppleJuice",TFT_WIDTH / 2,16,2);
       #endif
       #ifdef HAS_ILI9341
         display_obj.touchToExit();
@@ -7102,9 +7102,9 @@ void WiFiScan::RunSwiftpairSpam(uint8_t scan_mode, uint16_t color) {
       #ifdef HAS_FULL_SCREEN
         display_obj.tft.fillRect(0,16,TFT_WIDTH,16, color);
         if (scan_mode == BT_ATTACK_SWIFTPAIR_SPAM)
-          display_obj.tft.drawCentreString("Swiftpair Spam",TFT_WIDTH / 2,16,2);
+          display_obj.tft.drawCentreString("Swiftpair发送",TFT_WIDTH / 2,16,2);
         else if (scan_mode == BT_ATTACK_SPAM_ALL)
-          display_obj.tft.drawCentreString("BLE Spam All",TFT_WIDTH / 2,16,2);
+          display_obj.tft.drawCentreString("全部BLE发送",TFT_WIDTH / 2,16,2);
         else if (scan_mode == BT_ATTACK_SAMSUNG_SPAM)
           display_obj.tft.drawCentreString("BLE Spam Samsung",TFT_WIDTH / 2,16,2);
         else if (scan_mode == BT_ATTACK_GOOGLE_SPAM)
@@ -7167,23 +7167,23 @@ void WiFiScan::RunBluetoothScan(uint8_t scan_mode, uint16_t color) {
           if (scan_mode == BT_SCAN_ALL)
             display_obj.tft.drawCentreString(text_table4[41],TFT_WIDTH / 2,16,2);
           else if (scan_mode == BT_SCAN_IBEACON)
-            display_obj.tft.drawCentreString("iBeacon Sniff",TFT_WIDTH / 2,16,2);
+            display_obj.tft.drawCentreString("iBeacon侦听",TFT_WIDTH / 2,16,2);
           else if (scan_mode == BT_SCAN_FOX_HUNT)
-            display_obj.tft.drawCentreString("Fox Hunt",TFT_WIDTH / 2,16,2);
+            display_obj.tft.drawCentreString("信号寻向",TFT_WIDTH / 2,16,2);
           else if (scan_mode == BT_SCAN_AIRTAG)
-            display_obj.tft.drawCentreString("FindMy Sniff",TFT_WIDTH / 2,16,2);
+            display_obj.tft.drawCentreString("FindMy侦听",TFT_WIDTH / 2,16,2);
           else if (scan_mode == BT_SCAN_AIRTAG_MON)
-            display_obj.tft.drawCentreString("FindMy Monitor",TFT_WIDTH / 2,16,2);
+            display_obj.tft.drawCentreString("FindMy监视",TFT_WIDTH / 2,16,2);
           else if (scan_mode == BT_SCAN_FLIPPER)
-            display_obj.tft.drawCentreString("Flipper Sniff", TFT_WIDTH / 2, 16, 2);
+            display_obj.tft.drawCentreString("Flipper侦听", TFT_WIDTH / 2, 16, 2);
           else if (scan_mode == BT_SCAN_FLOCK)
-            display_obj.tft.drawCentreString("Flock Sniff", TFT_WIDTH / 2, 16, 2);
+            display_obj.tft.drawCentreString("Flock侦听", TFT_WIDTH / 2, 16, 2);
           else if (scan_mode == BT_SCAN_SIMPLE)
             display_obj.tft.drawCentreString("Simple Sniff", TFT_WIDTH / 2, 16, 2);
           else if (scan_mode == BT_SCAN_SIMPLE_TWO)
             display_obj.tft.drawCentreString("Simple Sniff 2", TFT_WIDTH / 2, 16, 2);
           else if (scan_mode == BT_SCAN_RAYBAN)
-            display_obj.tft.drawCentreString("Meta Detect",TFT_WIDTH / 2, 16, 2);
+            display_obj.tft.drawCentreString("Meta检测",TFT_WIDTH / 2, 16, 2);
           #ifdef HAS_ILI9341
             if (scan_mode != BT_SCAN_FLOCK)
               display_obj.touchToExit();
@@ -7249,7 +7249,7 @@ void WiFiScan::RunBluetoothScan(uint8_t scan_mode, uint16_t color) {
         this->setupScanDisplayArea(TFT_BLACK, color);
         #ifdef HAS_FULL_SCREEN
           display_obj.tft.fillRect(0,16,TFT_WIDTH,16, color);
-          display_obj.tft.drawCentreString("Bluetooth Analyzer", TFT_WIDTH / 2, 16, 2);
+          display_obj.tft.drawCentreString("蓝牙分析", TFT_WIDTH / 2, 16, 2);
           #ifdef HAS_ILI9341
             if (scan_mode != BT_SCAN_FLOCK)
               display_obj.touchToExit();
@@ -7971,7 +7971,7 @@ void WiFiScan::processPwnagotchiBeacon(const uint8_t* frame, int length) {
 
     #ifdef HAS_SCREEN
 
-      display_obj.queueLine(String("Name: ") + name + ",                 ");
+      display_obj.queueLine(String("名称：") + name + ",                 ");
       display_obj.queueLine("      Pwnd: " + String(pwnd_tot) + ",             ");
       display_obj.queueLine("    Uptime: " + String(uptime) + ",               ");
       if (deauth)
@@ -11203,7 +11203,7 @@ void WiFiScan::displayAnalyzerString(String str) {
                             TFT_WIDTH, 
                             CHAR_WIDTH + 2, 
                             TFT_BLACK);
-    //display_obj.tft.drawCentreString("Frames/" + (String)BANNER_TIME + "ms", TFT_WIDTH / 2, TFT_HEIGHT - GRAPH_VERT_LIM - (CHAR_WIDTH * 2), 1);
+    //display_obj.tft.drawCentreString("帧数/" + (String)BANNER_TIME + "ms", TFT_WIDTH / 2, TFT_HEIGHT - GRAPH_VERT_LIM - (CHAR_WIDTH * 2), 1);
     display_obj.tft.setCursor(0, TFT_HEIGHT - GRAPH_VERT_LIM - (CHAR_WIDTH * 4));
     display_obj.tft.setTextSize(1);
     display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -11223,7 +11223,7 @@ void WiFiScan::renderRawStats() {
     display_obj.tft.setTextSize(1);
     display_obj.tft.setTextColor(TFT_CYAN, TFT_BLACK);
 
-    display_obj.tft.println(F("Stats"));
+    display_obj.tft.println(F("统计"));
 
     display_obj.tft.setTextColor(TFT_WHITE, TFT_BLACK);
 
@@ -11559,7 +11559,7 @@ static err_t requestStationARP(struct netif* station, const ip4_addr_t* ip) {
       if (!this->scan_complete) {
         this->scan_complete = true;
         #ifdef HAS_SCREEN
-          display_obj.queueLine("Scan complete");
+          display_obj.queueLine("扫描完成");
         #endif
       }
     }
@@ -11767,7 +11767,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
         display_obj.tft.setTextSize(1);
         display_obj.showCenterText(service, 10, true);
         display_obj.tft.setTextColor(accent, TFT_BLACK);
-        display_obj.showCenterText(waiting ? "VERIFYING" : "UPLOADING", 28, true);
+        display_obj.showCenterText(waiting ? "正在验证" : "正在上传", 28, true);
       }
 
       String percentText = String(safePercent) + "%";
@@ -11792,7 +11792,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
 
         display_obj.tft.setTextSize(1);
         display_obj.tft.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
-        display_obj.showCenterText(waiting ? "VERIFYING SERVER RESPONSE" : "SECURE LOG UPLOAD",
+        display_obj.showCenterText(waiting ? "正在验证服务器响应" : "安全上传日志",
                                    TFT_HEIGHT / 3, true);
       }
 
@@ -11843,7 +11843,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
   bool WiFiScan::uploadFile(String filePath, bool retry, uint8_t upload_type) {
     #ifdef HAS_SCREEN
     display_obj.clearScreen();
-    display_obj.showCenterText(String("Uploading " + filePath).c_str(), TFT_HEIGHT / 2, true);
+    display_obj.showCenterText(String("正在上传 " + filePath).c_str(), TFT_HEIGHT / 2, true);
     #endif
     delay(1000);
     
@@ -11908,7 +11908,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
 
     if (!SD.exists(filePath)) {
       #ifdef HAS_SCREEN
-      display_obj.showCenterText(String(filePath + " not found").c_str(), TFT_HEIGHT / 2, true);
+      display_obj.showCenterText(String(filePath + " 未找到").c_str(), TFT_HEIGHT / 2, true);
       delay(2000);
       #endif
       Serial.println("[WDG] File not found: " + filePath);
@@ -12080,7 +12080,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
     } else {
       #ifdef HAS_SCREEN
         display_obj.clearScreen();
-        display_obj.showCenterText("WDG OK", TFT_HEIGHT / 2, true);
+        display_obj.showCenterText("WDG成功", TFT_HEIGHT / 2, true);
       #endif
       delay(1000);
     }
@@ -12101,7 +12101,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
     if (!SD.exists(filePath)) {
       #ifdef HAS_SCREEN
       display_obj.clearScreen();
-      display_obj.showCenterText(String(filePath + " not found").c_str(), TFT_HEIGHT / 2, true);
+      display_obj.showCenterText(String(filePath + " 未找到").c_str(), TFT_HEIGHT / 2, true);
       delay(2000);
       #endif
       Serial.println("File does not exist: " + filePath);
@@ -12169,7 +12169,7 @@ uint16_t WiFiScan::rssiToColor(int8_t rssi) {
       client->stop();
       #ifdef HAS_SCREEN
       display_obj.clearScreen();
-      display_obj.showCenterText("Could not connect", TFT_HEIGHT / 2, true);
+      display_obj.showCenterText("无法连接", TFT_HEIGHT / 2, true);
       delay(2000);
       #endif
       Serial.println("Failed to connected to api.wigle.net");

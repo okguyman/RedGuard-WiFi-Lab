@@ -58,8 +58,8 @@ def install_library(environment, name, repository, ref):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--setup', action='store_true', help='Install pinned core/libraries before compiling')
-    parser.add_argument('--environment', type=Path, default=ROOT / '.redguard-build')
-    parser.add_argument('--output-dir', type=Path, default=ROOT / 'build/redguard')
+    parser.add_argument('--environment', type=Path, default=ROOT / '.marauder-zh-build')
+    parser.add_argument('--output-dir', type=Path, default=ROOT / 'build/marauder-zh')
     args = parser.parse_args()
     env = args.environment.resolve()
     output = args.output_dir.resolve()
