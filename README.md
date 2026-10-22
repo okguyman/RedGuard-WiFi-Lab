@@ -1,5 +1,17 @@
 # ESP32 Marauder 中文界面（CYD 双 USB）
 
+## English overview
+
+Unofficial Chinese localization of ESP32 Marauder v1.18.0 for the ESP32-2432S028R dual-USB CYD board (ST7789, 4 MB flash), maintained by okguyman.
+
+This downstream work covers Chinese menu text, a 414-glyph embedded Noto Sans SC font subset, scrolling boundaries, pinned build tooling, and hardware-specific installation notes. The underlying firmware functionality belongs to the upstream project and its contributors. This is not an official upstream release.
+
+Repository records dated October 13, 2026 report working Chinese display and touch on one matching board. Wider hardware compatibility and complete functional coverage remain unverified. There are no verified external adoption figures yet.
+
+Source provenance: [ESP32 Marauder](https://github.com/justcallmekoko/ESP32Marauder), revision `b2b9f92382eb60b39b8741be3b567e416cdbe672`. See `LICENSE`, `assets/zh/OFL.txt`, `tools/build_zh.py`, and `docs/zh/` for licensing, build tooling, and recorded validation. Use only in environments you own or are authorized to test.
+
+## 中文说明
+
 基于官方 v1.18.0，提交 b2b9f92382eb60b39b8741be3b567e416cdbe672。
 上游：https://github.com/justcallmekoko/ESP32Marauder
 
